@@ -95,7 +95,7 @@ SMALI_FILE="$(find "${DECOMPILED}" -name 'DeviceSupportImpl.smali' -path '*/tile
 ok "Found: ${SMALI_FILE#${WORKDIR}/}"
 
 info "Patching validateIsUhdSupportedDevice method..."
-python3 << 'PYEOF' "${SMALI_FILE}"
+python3 - "${SMALI_FILE}" << 'PYEOF'
 import sys, re
 
 smali_path = sys.argv[1]
