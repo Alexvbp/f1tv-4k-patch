@@ -1,4 +1,4 @@
-# F1TV UHD Patch Pipeline
+# F1TV UHD Patcher
 
 Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playback on any device.
 
@@ -11,15 +11,42 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 5. **Publishes** the patched bundle as a GitHub Release
 6. **Notifies** via Pushover when a new patch is ready (or if it fails)
 
-## Install a patched release
+## Installing on your Android TV
 
-Download `f1tv-uhd-patched.apkm` from the [latest release](../../releases/latest), then:
+### Prerequisites: Enable Developer Options & ADB
+
+1. On your Android TV, go to **Settings > Device Preferences > About**
+2. Scroll to **Build** and click it **7 times** to enable Developer Options
+3. Go back to **Settings > Device Preferences > Developer Options**
+4. Enable **USB debugging** (and **ADB over network** if installing wirelessly)
+5. Note the **IP address** shown under Settings > Network & Internet, or Device Preferences > About > Status
+
+### Option 1: ADB from a computer (recommended)
+
+Install ADB on your computer ([download platform-tools](https://developer.android.com/tools/releases/platform-tools)) and add it to your PATH.
+
+**Via USB:**
+```bash
+# Connect your Android TV via USB cable, then:
+adb devices  # Confirm it shows up — approve the prompt on your TV
+```
+
+**Via WiFi:**
+```bash
+adb connect 192.168.1.100:5555  # Replace with your TV's IP
+# Approve the connection prompt on your TV
+```
+
+Then download `f1tv-uhd-patched.apkm` from the [latest release](../../releases/latest) and install:
 
 ```bash
 # Unzip the bundle
 mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
 
-# Install via ADB (adjust splits for your device)
+# Uninstall the original F1TV first (required — different signing key)
+adb uninstall com.formulaone.production
+
+# Install (adjust splits for your device — most Android TVs are arm64)
 adb install-multiple base.apk \
   split_config.arm64_v8a.apk \
   split_config.en.apk \
@@ -33,6 +60,39 @@ Or use the helper script which auto-detects your device's architecture and local
 # With ADB over WiFi:
 ./scripts/install.sh ./f1tv/ 192.168.1.100:5555
 ```
+
+### Option 2: Send & install directly on the TV
+
+No computer needed after the initial download.
+
+1. Download `f1tv-uhd-patched.apkm` from the [latest release](../../releases/latest) on your phone
+2. Install [Split APKs Installer (SAI)](https://play.google.com/store/apps/details?id=com.aefyr.sai) on your Android TV (available on Play Store)
+3. Transfer the `.apkm` file to your TV via:
+   - **USB drive** — copy the file to a USB stick, plug it into the TV
+   - **Send Files to TV** — install [this app](https://play.google.com/store/apps/details?id=com.yablio.sendfilestotv) on both your phone and TV, send the file over WiFi
+   - **Google Drive / cloud** — upload to Drive, open it from the TV's file manager
+4. Open SAI on the TV, select the `.apkm` file, and install
+
+### Option 3: Wireless ADB apps
+
+If you don't have a computer but want a one-tap solution:
+
+1. Install [Bugjaeger](https://play.google.com/store/apps/details?id=eu.sisik.hackendebug) on your Android phone
+2. Enable ADB over network on your TV (see prerequisites above)
+3. Connect Bugjaeger to your TV via its IP address
+4. Use Bugjaeger to install the individual APK files
+
+### Common split APKs
+
+| Split | When to include |
+|---|---|
+| `split_config.arm64_v8a.apk` | Most modern Android TVs (NVIDIA Shield, Chromecast, etc.) |
+| `split_config.armeabi_v7a.apk` | Older 32-bit devices |
+| `split_config.x86.apk` | Some emulators |
+| `split_config.en.apk` | English — replace `en` with your language code |
+| `split_config.xhdpi.apk` | Standard TV density — almost always needed |
+
+> **Note:** You must uninstall the original F1TV app before installing the patched version (different signing key). This means you'll need to log in again.
 
 ## Setup your own pipeline
 
@@ -90,3 +150,7 @@ Only needed if running scripts locally outside CI:
 - Python 3.10+, Playwright (`pip install playwright && playwright install chromium`)
 - Java, apktool, zipalign, apksigner
 - ADB (for install.sh)
+
+## License
+
+For personal/educational use only.
