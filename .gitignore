@@ -1,0 +1,8 @@
+output/
+download/
+*.apkm
+*.apk
+*.keystore
+__pycache__/
+*.pyc
+.env
