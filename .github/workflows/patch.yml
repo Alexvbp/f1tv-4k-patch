@@ -92,6 +92,7 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
           restore-keys: pip-
+          save-always: true
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -107,6 +108,7 @@ jobs:
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-${{ steps.pw.outputs.version }}
+          save-always: true
 
       - name: Install Playwright browser
         if: steps.pw-cache.outputs.cache-hit != 'true'
@@ -123,6 +125,7 @@ jobs:
         with:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
+          save-always: true
 
       - name: Install apktool
         if: steps.apktool-cache.outputs.cache-hit != 'true'
