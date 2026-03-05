@@ -285,11 +285,30 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         screenshot(page, output_path, "05_trigger_page")
         log(f"  Trigger page title: {page.title()}")
 
-        # ── Step 5: Wait for auto-download ────────────────────────────
-        # The trigger page runs a JS countdown, then auto-starts download.
-        # We poll for the download event with a generous timeout.
-        log("Step 5: Waiting for file download to start...")
+        # ── Step 5: Trigger the file download ─────────────────────────
+        # The trigger page has a #download-link element:
+        #   <a id="download-link" href="/wp-content/themes/APKMirror/download.php?...">here</a>
+        # The page JS would normally auto-click it after a countdown,
+        # but our ad blocking may prevent that. Click it directly.
+        log("Step 5: Looking for download link...")
 
+        dl_link_selector = "a#download-link"
+        try:
+            page.wait_for_selector(dl_link_selector, timeout=10000)
+            dl_href = page.evaluate("""
+                () => {
+                    const a = document.querySelector('a#download-link');
+                    return a ? a.href : null;
+                }
+            """)
+            log(f"  Found #download-link: {dl_href}")
+            nuke_ads(page)
+            page.click(dl_link_selector)
+            log("  Clicked #download-link")
+        except PwTimeout:
+            log("  #download-link not found, waiting for auto-download...")
+
+        # Poll for download event
         timeout_secs = 120
         poll_interval = 1
         elapsed = 0
@@ -298,21 +317,6 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
             elapsed += poll_interval
             if elapsed % 10 == 0:
                 log(f"  Still waiting... ({elapsed}s elapsed)")
-
-            # After 15s, try clicking any manual/fallback download link
-            if elapsed == 15 and download_event is None:
-                manual_selectors = [
-                    "a#safeDownloadButton",
-                    "a.downloadButton",
-                    "a[href*='.apkm']",
-                    "a[href*='.apks']",
-                ]
-                for sel in manual_selectors:
-                    manual = page.query_selector(sel)
-                    if manual:
-                        log(f"  Clicking fallback link: {sel}")
-                        manual.click()
-                        break
 
         if download_event is None:
             screenshot(page, output_path, "06_download_timeout")
