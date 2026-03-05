@@ -20,6 +20,10 @@ on:
 permissions:
   contents: write
 
+env:
+  APKTOOL_VERSION: "2.10.0"
+  PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+
 jobs:
   check:
     name: Check for new version
@@ -81,15 +85,48 @@ jobs:
         with:
           python-version: "3.12"
 
+      # ── Cached: pip packages ──
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: pip-
+
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
+      # ── Cached: Playwright browser ──
+      - name: Get Playwright version
+        id: pw
+        run: echo "version=$(playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-${{ steps.pw.outputs.version }}
+
       - name: Install Playwright browser
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: playwright install chromium --with-deps
 
+      - name: Install Playwright OS deps (from cache)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: playwright install-deps chromium
+
+      # ── Cached: apktool ──
+      - name: Cache apktool
+        id: apktool-cache
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/apktool*
+          key: apktool-${{ env.APKTOOL_VERSION }}
+
       - name: Install apktool
+        if: steps.apktool-cache.outputs.cache-hit != 'true'
         run: |
-          APKTOOL_VERSION="2.10.0"
           curl -sSL "https://github.com/iBotPeaches/Apktool/releases/download/v${APKTOOL_VERSION}/apktool_${APKTOOL_VERSION}.jar" -o /usr/local/bin/apktool.jar
           cat > /usr/local/bin/apktool << 'WRAPPER'
           #!/bin/bash
@@ -99,7 +136,6 @@ jobs:
 
       - name: Set up Android SDK tools
         run: |
-          # Find the latest build-tools version available on the runner
           BT_DIR="$(ls -d ${ANDROID_HOME}/build-tools/*/ 2>/dev/null | sort -V | tail -1)"
           if [[ -z "${BT_DIR}" ]]; then
             echo "Installing Android build-tools..."
@@ -108,7 +144,6 @@ jobs:
           fi
           echo "${BT_DIR}" >> "$GITHUB_PATH"
           echo "Using build-tools: ${BT_DIR}"
-          ls "${BT_DIR}"/{zipalign,apksigner} 2>/dev/null && echo "Tools found" || echo "WARN: tools not at expected path"
 
       # ── Option A: Download from APKMirror via Playwright ──
       - name: Download APKM from APKMirror
