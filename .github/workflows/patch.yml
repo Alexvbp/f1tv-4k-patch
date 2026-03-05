@@ -22,7 +22,7 @@ permissions:
 
 env:
   APKTOOL_VERSION: "2.10.0"
-  PLAYWRIGHT_BROWSERS_PATH: ~/.cache/ms-playwright
+  PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
 jobs:
   check:
@@ -84,14 +84,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      # ── Restore caches ──
-      - name: Restore pip cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: pip-
+          cache: pip
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -258,22 +251,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # ── Save caches (runs even if job fails) ──
-      - name: Save pip cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/pip
-          key: pip-${{ hashFiles('requirements.txt') }}
-
+      # continue-on-error: saving a key that already exists is a no-op error
       - name: Save Playwright cache
-        if: always()
+        if: always() && steps.pw-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-${{ steps.pw.outputs.version }}
 
       - name: Save apktool cache
-        if: always()
+        if: always() && steps.apktool-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: /usr/local/bin/apktool*
