@@ -180,7 +180,7 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         log(f"Step 1: Loading release page: {release_url}")
         page.goto(release_url, wait_until="domcontentloaded", timeout=60000)
         wait_for_cloudflare(page)
-        page.wait_for_load_state("networkidle", timeout=30000)
+        page.wait_for_load_state("load", timeout=30000)
         nuke_ads(page)
         screenshot(page, output_path, "01_release_page")
         log(f"  Page title: {page.title()}")
@@ -210,7 +210,7 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
             log(f"  Navigating to variant page: {bundle_href}")
             page.goto(bundle_href, wait_until="domcontentloaded", timeout=60000)
             wait_for_cloudflare(page)
-            page.wait_for_load_state("networkidle", timeout=30000)
+            page.wait_for_load_state("load", timeout=30000)
 
         nuke_ads(page)
         screenshot(page, output_path, "03_variant_page")
