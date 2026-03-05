@@ -2,8 +2,7 @@ name: F1TV UHD Patch
 
 on:
   schedule:
-    # Check every 6 hours
-    - cron: "0 */6 * * *"
+    - cron: "0 * * * *"
 
   workflow_dispatch:
     inputs:
@@ -72,6 +71,21 @@ jobs:
             echo "should_build=false" >> "$GITHUB_OUTPUT"
             echo "Release v${{ steps.version.outputs.version_short }} already exists, skipping"
           fi
+
+      # Notify on new version detected
+      - name: Notify via Pushover (new version)
+        if: steps.decide.outputs.should_build == 'true' && !inputs.force
+        run: |
+          curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
+               --form-string "user=$PUSHOVER_USER_KEY" \
+               --form-string "title=F1TV UHD: New version detected" \
+               --form-string "message=Version ${{ steps.version.outputs.version }} found. Patching started." \
+               --form-string "priority=0" \
+               --form-string "sound=pushover" \
+               https://api.pushover.net/1/messages.json || true
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
 
   patch:
     name: Download, patch & release
@@ -209,6 +223,7 @@ jobs:
 
       # ── Create GitHub Release ──
       - name: Create release
+        id: release
         run: |
           TAG="v${{ needs.check.outputs.version_short }}"
           TITLE="F1TV UHD Patched - ${{ needs.check.outputs.version }}"
@@ -247,11 +262,46 @@ jobs:
           NOTES
           )" \
             output/f1tv-uhd-patched.apkm
+
+          echo "release_url=https://github.com/${{ github.repository }}/releases/tag/${TAG}" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # ── Notify: success ──
+      - name: Notify via Pushover (success)
+        if: success()
+        run: |
+          curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
+               --form-string "user=$PUSHOVER_USER_KEY" \
+               --form-string "title=F1TV UHD: Patch ready!" \
+               --form-string "message=Version ${{ needs.check.outputs.version }} patched and released." \
+               --form-string "url=${{ steps.release.outputs.release_url }}" \
+               --form-string "url_title=Download from GitHub" \
+               --form-string "priority=0" \
+               --form-string "sound=pushover" \
+               https://api.pushover.net/1/messages.json || true
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+
+      # ── Notify: failure ──
+      - name: Notify via Pushover (failure)
+        if: failure()
+        run: |
+          curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
+               --form-string "user=$PUSHOVER_USER_KEY" \
+               --form-string "title=F1TV UHD: Patch failed" \
+               --form-string "message=Version ${{ needs.check.outputs.version }} failed to patch. Check workflow logs." \
+               --form-string "url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+               --form-string "url_title=View workflow run" \
+               --form-string "priority=0" \
+               --form-string "sound=falling" \
+               https://api.pushover.net/1/messages.json || true
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+
       # ── Save caches (runs even if job fails) ──
-      # continue-on-error: saving a key that already exists is a no-op error
       - name: Save Playwright cache
         if: always() && steps.pw-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
