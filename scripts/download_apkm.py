@@ -263,29 +263,22 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
 
         page.on("download", on_download)
 
-        # Navigate using the button's href — via JS to preserve cookies/session
-        navigated = page.evaluate("""
+        # Extract href first, then navigate properly with expect_navigation
+        key_href = page.evaluate("""
             () => {
                 const btn = document.querySelector('a.downloadButton');
-                if (btn && btn.href) {
-                    window.location.href = btn.href;
-                    return btn.href;
-                }
-                return null;
+                return btn ? btn.href : null;
             }
         """)
 
-        if not navigated:
+        if not key_href:
             log("ERROR: Could not extract download button href")
             sys.exit(1)
 
-        log(f"  Navigating to: {navigated}")
+        log(f"  Navigating to: {key_href}")
 
-        # Wait for the trigger page to load
-        try:
-            page.wait_for_load_state("domcontentloaded", timeout=30000)
-        except PwTimeout:
-            pass
+        # Use page.goto instead of window.location to avoid context destruction
+        page.goto(key_href, wait_until="domcontentloaded", timeout=60000)
         wait_for_cloudflare(page)
         nuke_ads(page)
 

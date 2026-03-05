@@ -85,30 +85,27 @@ jobs:
         with:
           python-version: "3.12"
 
-      # ── Cached: pip packages ──
-      - name: Cache pip packages
-        uses: actions/cache@v4
+      # ── Restore caches ──
+      - name: Restore pip cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
           restore-keys: pip-
-          save-always: true
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 
-      # ── Cached: Playwright browser ──
       - name: Get Playwright version
         id: pw
         run: echo "version=$(playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Playwright browsers
+      - name: Restore Playwright cache
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-${{ steps.pw.outputs.version }}
-          save-always: true
 
       - name: Install Playwright browser
         if: steps.pw-cache.outputs.cache-hit != 'true'
@@ -118,14 +115,12 @@ jobs:
         if: steps.pw-cache.outputs.cache-hit == 'true'
         run: playwright install-deps chromium
 
-      # ── Cached: apktool ──
-      - name: Cache apktool
+      - name: Restore apktool cache
         id: apktool-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
-          save-always: true
 
       - name: Install apktool
         if: steps.apktool-cache.outputs.cache-hit != 'true'
@@ -261,3 +256,25 @@ jobs:
             output/f1tv-uhd-patched.apkm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Save caches (runs even if job fails) ──
+      - name: Save pip cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Save Playwright cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          key: playwright-${{ steps.pw.outputs.version }}
+
+      - name: Save apktool cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /usr/local/bin/apktool*
+          key: apktool-${{ env.APKTOOL_VERSION }}
