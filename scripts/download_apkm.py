@@ -60,7 +60,7 @@ NUKE_ADS_JS = """
 () => {
     // Remove elements by common ad selectors
     const selectors = [
-        '[id*="google_ads"]', '[id*="aswift"]', '[id*="ad-"]', '[id*="ad_"]',
+        '[id*="google_ads"]', '[id*="aswift"]',
         '[class*="ad-overlay"]', '[class*="ad-container"]', '[class*="ad-wrapper"]',
         '[class*="interstitial"]', '[class*="modal-backdrop"]',
         'iframe[src*="doubleclick"]', 'iframe[src*="googlesyndication"]',
