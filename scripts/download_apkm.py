@@ -18,6 +18,82 @@ from playwright.sync_api import sync_playwright, TimeoutError as PwTimeout
 
 BASE = "https://www.apkmirror.com"
 
+# Block ad/tracking domains at the network level.
+AD_DOMAIN_KEYWORDS = [
+    "doubleclick.net",
+    "googlesyndication.com",
+    "googleadservices.com",
+    "google-analytics.com",
+    "googletagmanager.com",
+    "googletagservices.com",
+    "adservice.google",
+    "pagead2.googlesyndication",
+    "tpc.googlesyndication",
+    "fundingchoicesmessages.google",
+    "amazon-adsystem.com",
+    "adskeeper.co.uk",
+    "adnxs.com",
+    "adsrvr.org",
+    "outbrain.com",
+    "taboola.com",
+    "criteo.com",
+    "pubmatic.com",
+    "rubiconproject.com",
+    "openx.net",
+    "casalemedia.com",
+    "moatads.com",
+    "serving-sys.com",
+    "quantserve.com",
+    "scorecardresearch.com",
+    "hotjar.com",
+    "facebook.net",
+    "connect.facebook",
+    "cdn.privacy-mgmt.com",
+    "sp-prod.net",
+    "consent.cookiebot",
+    "consensu.org",
+    "gstatic.com/adsense",
+]
+
+# JS to nuke ad overlays, modals, and consent banners from the DOM.
+NUKE_ADS_JS = """
+() => {
+    // Remove elements by common ad selectors
+    const selectors = [
+        '[id*="google_ads"]', '[id*="aswift"]', '[id*="ad-"]', '[id*="ad_"]',
+        '[class*="ad-overlay"]', '[class*="ad-container"]', '[class*="ad-wrapper"]',
+        '[class*="interstitial"]', '[class*="modal-backdrop"]',
+        'iframe[src*="doubleclick"]', 'iframe[src*="googlesyndication"]',
+        'iframe[id*="aswift"]', 'iframe[id*="google_ads"]',
+        '[id*="consent"]', '[class*="consent"]', '[class*="cookie-banner"]',
+        '.fc-dialog-container', '.fc-consent-root', '#cmpbox', '#cmpbox2',
+        '[id*="sp_message"]', '[class*="sp_message"]',
+    ];
+    let removed = 0;
+    for (const sel of selectors) {
+        for (const el of document.querySelectorAll(sel)) {
+            el.remove();
+            removed++;
+        }
+    }
+    // Remove any fixed/sticky overlays covering the page
+    for (const el of document.querySelectorAll('div, aside, section')) {
+        const style = window.getComputedStyle(el);
+        if ((style.position === 'fixed' || style.position === 'sticky') &&
+            parseFloat(style.zIndex) > 999 &&
+            el.offsetWidth > window.innerWidth * 0.5 &&
+            el.offsetHeight > window.innerHeight * 0.3) {
+            el.remove();
+            removed++;
+        }
+    }
+    // Reset body overflow in case ads locked scrolling
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+    return removed;
+}
+"""
+
 
 def log(msg: str):
     print(f"[download] {msg}", file=sys.stderr, flush=True)
@@ -27,6 +103,16 @@ def screenshot(page, output_dir: Path, name: str):
     path = output_dir / f"debug_{name}.png"
     page.screenshot(path=str(path), full_page=True)
     log(f"  screenshot: {path}")
+
+
+def nuke_ads(page):
+    """Remove ad overlays and modals from the DOM."""
+    try:
+        removed = page.evaluate(NUKE_ADS_JS)
+        if removed:
+            log(f"  Removed {removed} ad/overlay elements")
+    except Exception:
+        pass  # Page may be navigating
 
 
 def wait_for_cloudflare(page, timeout: int = 15):
@@ -82,11 +168,20 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         )
         page = context.new_page()
 
+        # Block ad/tracking requests at the network level
+        def block_ads(route):
+            route.abort()
+
+        for domain in AD_DOMAIN_KEYWORDS:
+            page.route(f"**/*{domain}*", block_ads)
+        log("Ad blocker active (network-level)")
+
         # ── Step 1: Navigate to release page ──────────────────────────
         log(f"Step 1: Loading release page: {release_url}")
         page.goto(release_url, wait_until="domcontentloaded", timeout=60000)
         wait_for_cloudflare(page)
         page.wait_for_load_state("networkidle", timeout=30000)
+        nuke_ads(page)
         screenshot(page, output_path, "01_release_page")
         log(f"  Page title: {page.title()}")
 
@@ -117,6 +212,7 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
             wait_for_cloudflare(page)
             page.wait_for_load_state("networkidle", timeout=30000)
 
+        nuke_ads(page)
         screenshot(page, output_path, "03_variant_page")
         log(f"  Page title: {page.title()}")
 
@@ -149,6 +245,8 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         # ── Step 4: Click button → navigates to download trigger page ─
         #   IMPORTANT: We click instead of navigating to the href directly,
         #   because APKMirror validates referrer/cookies.
+        # Nuke ads again right before clicking — an overlay could intercept the click
+        nuke_ads(page)
         log("Step 4: Clicking download button (navigates to trigger page)...")
 
         # Set up download listener BEFORE clicking, since the trigger page
@@ -171,6 +269,7 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         except PwTimeout:
             pass  # May already have navigated, continue
         wait_for_cloudflare(page)
+        nuke_ads(page)
 
         screenshot(page, output_path, "05_trigger_page")
         log(f"  Trigger page title: {page.title()}")
