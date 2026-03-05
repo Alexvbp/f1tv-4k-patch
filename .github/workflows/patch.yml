@@ -1,0 +1,212 @@
+name: F1TV UHD Patch
+
+on:
+  schedule:
+    # Check every 6 hours
+    - cron: "0 */6 * * *"
+
+  workflow_dispatch:
+    inputs:
+      apkm_url:
+        description: "Direct URL to .apkm file (bypasses auto-download)"
+        required: false
+        type: string
+      force:
+        description: "Force rebuild even if release already exists"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    name: Check for new version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_short: ${{ steps.version.outputs.version_short }}
+      release_url: ${{ steps.version.outputs.release_url }}
+      should_build: ${{ steps.decide.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check latest version from RSS
+        id: version
+        run: python scripts/check_version.py
+
+      - name: Check if release already exists
+        id: existing
+        run: |
+          if gh release view "v${{ steps.version.outputs.version_short }}" &>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decide whether to build
+        id: decide
+        run: |
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Forced build requested"
+          elif [[ -n "${{ inputs.apkm_url }}" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "Manual APKM URL provided"
+          elif [[ "${{ steps.existing.outputs.exists }}" == "false" ]]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            echo "New version: v${{ steps.version.outputs.version_short }}"
+          else
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "Release v${{ steps.version.outputs.version_short }} already exists, skipping"
+          fi
+
+  patch:
+    name: Download, patch & release
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
+
+      - name: Install apktool
+        run: |
+          APKTOOL_VERSION="2.10.0"
+          curl -sSL "https://github.com/iBotPeaches/Apktool/releases/download/v${APKTOOL_VERSION}/apktool_${APKTOOL_VERSION}.jar" -o /usr/local/bin/apktool.jar
+          cat > /usr/local/bin/apktool << 'WRAPPER'
+          #!/bin/bash
+          java -jar /usr/local/bin/apktool.jar "$@"
+          WRAPPER
+          chmod +x /usr/local/bin/apktool
+
+      - name: Set up Android SDK tools
+        run: |
+          # Find the latest build-tools version available on the runner
+          BT_DIR="$(ls -d ${ANDROID_HOME}/build-tools/*/ 2>/dev/null | sort -V | tail -1)"
+          if [[ -z "${BT_DIR}" ]]; then
+            echo "Installing Android build-tools..."
+            ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "build-tools;35.0.0"
+            BT_DIR="${ANDROID_HOME}/build-tools/35.0.0/"
+          fi
+          echo "${BT_DIR}" >> "$GITHUB_PATH"
+          echo "Using build-tools: ${BT_DIR}"
+          ls "${BT_DIR}"/{zipalign,apksigner} 2>/dev/null && echo "Tools found" || echo "WARN: tools not at expected path"
+
+      # ── Option A: Download from APKMirror via Playwright ──
+      - name: Download APKM from APKMirror
+        if: ${{ !inputs.apkm_url }}
+        id: download_auto
+        run: |
+          mkdir -p download
+          APKM_PATH=$(python scripts/download_apkm.py "${{ needs.check.outputs.release_url }}" -o download)
+          echo "apkm_path=${APKM_PATH}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      # ── Option B: Download from direct URL ──
+      - name: Download APKM from URL
+        if: ${{ inputs.apkm_url }}
+        id: download_url
+        run: |
+          mkdir -p download
+          curl -sSL -o download/f1tv.apkm "${{ inputs.apkm_url }}"
+          echo "apkm_path=download/f1tv.apkm" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve APKM path
+        id: apkm
+        run: |
+          if [[ -n "${{ steps.download_url.outputs.apkm_path }}" ]]; then
+            echo "path=${{ steps.download_url.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ steps.download_auto.outputs.apkm_path }}" ]]; then
+            echo "path=${{ steps.download_auto.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Failed to obtain APKM file. Auto-download may have been blocked by Cloudflare."
+            echo "::error::Trigger the workflow manually with a direct APKM URL."
+            exit 1
+          fi
+
+      # ── Decode persistent keystore from secret (optional) ──
+      - name: Set up keystore
+        if: ${{ env.KEYSTORE_B64 != '' }}
+        run: |
+          echo "${KEYSTORE_B64}" | base64 -d > /tmp/patch.keystore
+          echo "KEYSTORE_PATH=/tmp/patch.keystore" >> "$GITHUB_ENV"
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+
+      # ── Patch ──
+      - name: Patch APKM
+        run: |
+          chmod +x scripts/patch.sh
+          bash scripts/patch.sh "${{ steps.apkm.outputs.path }}" output/
+        env:
+          KEYSTORE_PATH: ${{ env.KEYSTORE_PATH || '' }}
+          KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS || 'android' }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS || 'f1tvpatch' }}
+
+      # ── Upload artifacts (always, even if release creation fails) ──
+      - name: Upload patched APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: f1tv-uhd-patched-${{ needs.check.outputs.version_short }}
+          path: output/
+          retention-days: 90
+
+      # ── Create GitHub Release ──
+      - name: Create release
+        run: |
+          TAG="v${{ needs.check.outputs.version_short }}"
+          TITLE="F1TV UHD Patched - ${{ needs.check.outputs.version }}"
+
+          # Delete existing release if force-rebuilding
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            gh release delete "${TAG}" --yes 2>/dev/null || true
+            git push --delete origin "${TAG}" 2>/dev/null || true
+          fi
+
+          gh release create "${TAG}" \
+            --title "${TITLE}" \
+            --notes "$(cat <<NOTES
+          Patched F1TV Android TV app with UHD/4K enabled.
+
+          **Version:** \`${{ needs.check.outputs.version }}\`
+
+          ## Install
+
+          1. Download \`f1tv-uhd-patched.apkm\` below
+          2. Unzip it (it's a zip of APK files)
+          3. Install via ADB, selecting splits for your device:
+
+          \`\`\`bash
+          # Unzip the bundle
+          mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
+
+          # Install (adjust splits for your device)
+          adb install-multiple base.apk split_config.arm64_v8a.apk split_config.en.apk split_config.xhdpi.apk
+          \`\`\`
+
+          Or use the included install script:
+          \`\`\`bash
+          ./scripts/install.sh ./f1tv/ [device-ip:5555]
+          \`\`\`
+          NOTES
+          )" \
+            output/f1tv-uhd-patched.apkm
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
