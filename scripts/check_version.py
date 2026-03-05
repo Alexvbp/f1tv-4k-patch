@@ -73,6 +73,7 @@ def main():
             f.write(f"version={latest['version']}\n")
             f.write(f"version_short={latest['version_short']}\n")
             f.write(f"release_url={latest['release_url']}\n")
+            f.write(f"variant_url={latest['link']}\n")
             f.write(f"title={latest['title']}\n")
     else:
         # Print JSON for local use

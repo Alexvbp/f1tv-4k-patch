@@ -28,6 +28,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       version_short: ${{ steps.version.outputs.version_short }}
       release_url: ${{ steps.version.outputs.release_url }}
+      variant_url: ${{ steps.version.outputs.variant_url }}
       should_build: ${{ steps.decide.outputs.should_build }}
     steps:
       - uses: actions/checkout@v4
@@ -115,9 +116,21 @@ jobs:
         id: download_auto
         run: |
           mkdir -p download
-          APKM_PATH=$(python scripts/download_apkm.py "${{ needs.check.outputs.release_url }}" -o download)
+          APKM_PATH=$(python scripts/download_apkm.py \
+            "${{ needs.check.outputs.release_url }}" \
+            --variant-url "${{ needs.check.outputs.variant_url }}" \
+            -o download)
           echo "apkm_path=${APKM_PATH}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
+
+      - name: Upload download debug screenshots
+        if: ${{ !inputs.apkm_url && steps.download_auto.outcome != 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: download-debug-screenshots
+          path: download/debug_*
+          retention-days: 7
+          if-no-files-found: ignore
 
       # ── Option B: Download from direct URL ──
       - name: Download APKM from URL
