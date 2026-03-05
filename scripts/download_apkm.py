@@ -216,18 +216,17 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
         screenshot(page, output_path, "03_variant_page")
         log(f"  Page title: {page.title()}")
 
-        # ── Step 3: Wait for and click the download button ────────────
+        # ── Step 3: Find the download button ──────────────────────────
         # The button:
         #   <a rel="nofollow" class="accent_bg btn btn-flat downloadButton wST"
         #      href="/.../download/?key=...">Download APK Bundle</a>
-        log("Step 3: Waiting for download button...")
+        log("Step 3: Finding download button...")
 
         btn_selector = "a.downloadButton"
         try:
-            page.wait_for_selector(btn_selector, state="visible", timeout=15000)
+            page.wait_for_selector(btn_selector, timeout=15000)
         except PwTimeout:
             screenshot(page, output_path, "04_no_download_btn")
-            # Log all <a> elements for debugging
             links = page.evaluate("""
                 () => Array.from(document.querySelectorAll('a')).slice(0, 30).map(
                     a => ({class: a.className, href: a.href, text: a.textContent.trim().substring(0, 80)})
@@ -237,20 +236,24 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
             log("ERROR: Download button not found (a.downloadButton)")
             sys.exit(1)
 
-        btn = page.query_selector(btn_selector)
-        btn_href = btn.get_attribute("href") if btn else None
-        btn_text = btn.inner_text().strip() if btn else None
-        log(f"  Found button: '{btn_text}' -> {btn_href}")
+        # Extract the href via JS to confirm we have the right element
+        btn_info = page.evaluate("""
+            () => {
+                const btn = document.querySelector('a.downloadButton');
+                if (!btn) return null;
+                return { href: btn.href, text: btn.textContent.trim(), classes: btn.className };
+            }
+        """)
+        log(f"  Found button: {btn_info}")
 
-        # ── Step 4: Click button → navigates to download trigger page ─
-        #   IMPORTANT: We click instead of navigating to the href directly,
-        #   because APKMirror validates referrer/cookies.
-        # Nuke ads again right before clicking — an overlay could intercept the click
-        nuke_ads(page)
-        log("Step 4: Clicking download button (navigates to trigger page)...")
+        # ── Step 4: Navigate to download trigger page ─────────────────
+        #   page.click() fails when ad overlays intercept the click event,
+        #   even after removing them (new ones can spawn).
+        #   Instead, extract the href and navigate via JS (window.location),
+        #   which is immune to overlay interception.
+        log("Step 4: Navigating to download trigger page via JS...")
 
-        # Set up download listener BEFORE clicking, since the trigger page
-        # will auto-start the download via JS after a countdown.
+        # Set up download listener BEFORE navigating
         download_event = None
 
         def on_download(dl):
@@ -260,14 +263,29 @@ def download_apkm(release_url: str, variant_url: str | None, output_dir: str) ->
 
         page.on("download", on_download)
 
-        # Click the button — this navigates to the /download/?key= page
-        page.click(btn_selector)
+        # Navigate using the button's href — via JS to preserve cookies/session
+        navigated = page.evaluate("""
+            () => {
+                const btn = document.querySelector('a.downloadButton');
+                if (btn && btn.href) {
+                    window.location.href = btn.href;
+                    return btn.href;
+                }
+                return null;
+            }
+        """)
+
+        if not navigated:
+            log("ERROR: Could not extract download button href")
+            sys.exit(1)
+
+        log(f"  Navigating to: {navigated}")
 
         # Wait for the trigger page to load
         try:
             page.wait_for_load_state("domcontentloaded", timeout=30000)
         except PwTimeout:
-            pass  # May already have navigated, continue
+            pass
         wait_for_cloudflare(page)
         nuke_ads(page)
 
