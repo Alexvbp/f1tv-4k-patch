@@ -1,10 +1,10 @@
 # F1TV UHD Patcher
 
-Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playback on any device.
+Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playback on any device. (only tested on my own Nvidia Shield TV Pro)
 
 ## How it works
 
-1. **Checks** APKPure hourly for new F1TV Android TV releases
+1. **Checks** APKPure every 3 hours for new F1TV Android TV releases
 2. **Downloads** the app bundle — Google Play primary (arm64 native via NVIDIA Shield profile), APKPure and APKMirror as fallbacks
 3. **Patches** the `validateIsUhdSupportedDevice` smali method to always return `true`
 4. **Signs** all APKs with a consistent keystore
