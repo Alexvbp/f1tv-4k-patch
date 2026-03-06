@@ -22,6 +22,7 @@ permissions:
 env:
   APKTOOL_VERSION: "2.10.0"
   APKEEP_VERSION: "0.18.0"
+  APKEEP_CUSTOM_TAG: "v0.18.0-shield"
   PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
 jobs:
@@ -187,25 +188,74 @@ jobs:
           echo "${BT_DIR}" >> "$GITHUB_PATH"
           echo "Using build-tools: ${BT_DIR}"
 
-      - name: Restore apkeep cache (patch)
+      - name: Restore custom apkeep cache
         if: ${{ !inputs.apkm_url }}
-        id: apkeep-cache
+        id: apkeep-custom-cache
         uses: actions/cache/restore@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-v2-${{ env.APKEEP_VERSION }}
+          key: apkeep-custom-${{ env.APKEEP_CUSTOM_TAG }}
 
-      - name: Install apkeep
-        if: ${{ !inputs.apkm_url && steps.apkeep-cache.outputs.cache-hit != 'true' }}
+      - name: Install custom apkeep (with Shield TV profile)
+        if: ${{ !inputs.apkm_url && steps.apkeep-custom-cache.outputs.cache-hit != 'true' }}
         run: |
-          curl -sSL "https://github.com/EFForg/apkeep/releases/download/${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          curl -sSL "https://github.com/Alexvbp/apkeep/releases/download/${APKEEP_CUSTOM_TAG}/apkeep-x86_64-linux.tar.gz" | tar xz -C /usr/local/bin/
           chmod +x /usr/local/bin/apkeep
 
-      # ── Option A: Download from APKPure via apkeep ──
+      # ── Option A: Download from Google Play (arm64 via Shield profile) ──
+      - name: Download from Google Play
+        if: ${{ !inputs.apkm_url && env.GOOGLE_EMAIL != '' }}
+        id: download_gplay
+        run: |
+          mkdir -p download
+          echo "Downloading F1TV from Google Play (NVIDIA Shield TV profile)..."
+          apkeep -d google-play \
+            -e "${GOOGLE_EMAIL}" \
+            -t "${GOOGLE_AAS_TOKEN}" \
+            -o "device=nvidia_shield_tv,split_apk=true" \
+            --accept-tos \
+            -a "com.formulaone.production" \
+            download/
+
+          # split_apk=true creates a directory of APKs
+          SPLIT_DIR="download/com.formulaone.production"
+          if [[ -d "${SPLIT_DIR}" ]]; then
+            echo "Split APKs from Google Play:"
+            ls -la "${SPLIT_DIR}/"
+            # Wrap into APKM bundle for patch.sh
+            (cd "${SPLIT_DIR}" && zip -q ../f1tv-gplay.apkm *.apk)
+            echo "apkm_path=download/f1tv-gplay.apkm" >> "$GITHUB_OUTPUT"
+            echo "source=google-play" >> "$GITHUB_OUTPUT"
+          else
+            # Single APK fallback
+            DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' -print -quit)
+            if [[ -n "${DOWNLOADED}" ]]; then
+              echo "Downloaded: ${DOWNLOADED}"
+              if [[ "${DOWNLOADED}" == *.apk ]]; then
+                mkdir -p download/bundle_gp
+                cp "${DOWNLOADED}" download/bundle_gp/base.apk
+                (cd download/bundle_gp && zip -q ../f1tv-gplay.apkm base.apk)
+                echo "apkm_path=download/f1tv-gplay.apkm" >> "$GITHUB_OUTPUT"
+              else
+                echo "apkm_path=${DOWNLOADED}" >> "$GITHUB_OUTPUT"
+              fi
+              echo "source=google-play" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Google Play download produced no files"
+              exit 1
+            fi
+          fi
+        continue-on-error: true
+        env:
+          GOOGLE_EMAIL: ${{ secrets.GOOGLE_EMAIL }}
+          GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
+
+      # ── Option B: Download from APKPure via apkeep ──
       - name: Download from APKPure
-        if: ${{ !inputs.apkm_url }}
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' }}
         id: download_apkpure
         run: |
+          echo "Google Play unavailable, falling back to APKPure..."
           mkdir -p download
           TV_VERSION="${{ needs.check.outputs.version }}"
           echo "Downloading F1TV TV version: ${TV_VERSION}"
@@ -237,17 +287,18 @@ jobs:
           fi
 
           echo "apkm_path=${DOWNLOADED}" >> "$GITHUB_OUTPUT"
+          echo "source=apkpure" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
-      # ── Option B: Download from APKMirror via Playwright ──
+      # ── Option C: Download from APKMirror via Playwright ──
       - name: Check latest version from RSS
-        if: ${{ !inputs.apkm_url && steps.download_apkpure.outcome != 'success' }}
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.download_apkpure.outcome != 'success' }}
         id: rss
         run: python scripts/check_version.py
         continue-on-error: true
 
       - name: Download APKM from APKMirror
-        if: ${{ !inputs.apkm_url && steps.download_apkpure.outcome != 'success' && steps.rss.outputs.release_url != '' }}
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.download_apkpure.outcome != 'success' && steps.rss.outputs.release_url != '' }}
         id: download_auto
         run: |
           echo "APKPure download failed, trying APKMirror..."
@@ -257,10 +308,11 @@ jobs:
             --variant-url "${{ steps.rss.outputs.variant_url }}" \
             -o download)
           echo "apkm_path=${APKM_PATH}" >> "$GITHUB_OUTPUT"
+          echo "source=apkmirror" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Upload download debug screenshots
-        if: ${{ !inputs.apkm_url && steps.download_apkpure.outcome != 'success' && steps.download_auto.outcome != 'success' }}
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.download_apkpure.outcome != 'success' && steps.download_auto.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: download-debug-screenshots
@@ -268,7 +320,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      # ── Option C: Download from direct URL ──
+      # ── Option D: Download from direct URL ──
       - name: Download APKM from URL
         if: ${{ inputs.apkm_url }}
         id: download_url
@@ -282,12 +334,17 @@ jobs:
         run: |
           if [[ -n "${{ steps.download_url.outputs.apkm_path }}" ]]; then
             echo "path=${{ steps.download_url.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ steps.download_gplay.outputs.apkm_path }}" ]]; then
+            echo "path=${{ steps.download_gplay.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+            echo "source=${{ steps.download_gplay.outputs.source }}" >> "$GITHUB_OUTPUT"
           elif [[ -n "${{ steps.download_apkpure.outputs.apkm_path }}" ]]; then
             echo "path=${{ steps.download_apkpure.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+            echo "source=${{ steps.download_apkpure.outputs.source }}" >> "$GITHUB_OUTPUT"
           elif [[ -n "${{ steps.download_auto.outputs.apkm_path }}" ]]; then
             echo "path=${{ steps.download_auto.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+            echo "source=${{ steps.download_auto.outputs.source }}" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::All download methods failed (APKPure + APKMirror)."
+            echo "::error::All download methods failed (Google Play + APKPure + APKMirror)."
             echo "::error::Trigger the workflow manually with a direct APKM URL."
             exit 1
           fi
@@ -332,12 +389,22 @@ jobs:
             git push --delete origin "${TAG}" 2>/dev/null || true
           fi
 
+          SOURCE="${{ steps.apkm.outputs.source }}"
+          if [[ "${SOURCE}" == "google-play" ]]; then
+            SOURCE_NOTE="Source: Google Play (arm64-v8a native)"
+          elif [[ "${SOURCE}" == "apkpure" ]]; then
+            SOURCE_NOTE="Source: APKPure (armeabi-v7a)"
+          else
+            SOURCE_NOTE="Source: ${SOURCE:-manual}"
+          fi
+
           gh release create "${TAG}" \
             --title "${TITLE}" \
             --notes "$(cat <<NOTES
           Patched F1TV Android TV app with UHD/4K enabled.
 
           **Version:** \`${{ needs.check.outputs.version }}\`
+          **${SOURCE_NOTE}**
 
           ## Install
 
@@ -345,12 +412,6 @@ jobs:
 
           \`\`\`bash
           ./scripts/install.sh f1tv-uhd-patched.apkm [device-ip:5555]
-          \`\`\`
-
-          Or install manually:
-          \`\`\`bash
-          mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
-          adb install-multiple base.apk config.armeabi_v7a.apk config.en.apk config.xhdpi.apk
           \`\`\`
 
           See the [README](https://github.com/${{ github.repository }}#installing-on-your-android-tv) for full setup instructions.
@@ -411,9 +472,9 @@ jobs:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
 
-      - name: Save apkeep cache (patch)
-        if: always() && steps.apkeep-cache.outputs.cache-hit != 'true'
+      - name: Save custom apkeep cache
+        if: always() && steps.apkeep-custom-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-v2-${{ env.APKEEP_VERSION }}
+          key: apkeep-custom-${{ env.APKEEP_CUSTOM_TAG }}

@@ -5,7 +5,7 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 ## How it works
 
 1. **Checks** APKPure hourly for new F1TV Android TV releases
-2. **Downloads** the XAPK bundle (APKPure primary, APKMirror fallback)
+2. **Downloads** the app bundle — Google Play primary (arm64 native via NVIDIA Shield profile), APKPure and APKMirror as fallbacks
 3. **Patches** the `validateIsUhdSupportedDevice` smali method to always return `true`
 4. **Signs** all APKs with a consistent keystore
 5. **Publishes** the patched bundle as a GitHub Release
@@ -105,17 +105,34 @@ The bundle contains split APKs for different device configurations. You need `ba
 
 Fork this repo and enable GitHub Actions in the Actions tab.
 
-### 2. Secrets (optional but recommended)
+### 2. Custom apkeep fork
+
+The pipeline uses a custom build of [apkeep](https://github.com/EFForg/apkeep) with an NVIDIA Shield TV device profile added to [rs-google-play](https://github.com/EFForg/rs-google-play). This allows downloading the arm64 native variant directly from Google Play.
+
+To set up your own:
+
+1. Fork [EFForg/rs-google-play](https://github.com/EFForg/rs-google-play), add your device profile to `gpapi/device.properties`, delete `gpapi/src/device_properties.bin`, commit & push
+2. Fork [EFForg/apkeep](https://github.com/EFForg/apkeep), change `Cargo.toml` to point `gpapi` at your rs-google-play fork, commit & push
+3. Tag a release (`git tag v0.18.0-shield && git push origin v0.18.0-shield`) — the included workflow builds the binary automatically
+4. Update `APKEEP_CUSTOM_TAG` in `patch.yml` to match your tag
+
+A device profile dump script is included at `scripts/dump_device_props.sh` — connect your Android TV via ADB and run it to generate the profile.
+
+### 3. Secrets
 
 In **Settings > Secrets > Actions**, add:
 
-| Secret | Purpose |
-|---|---|
-| `KEYSTORE_B64` | Base64-encoded signing keystore (persistent key across builds) |
-| `KEYSTORE_PASS` | Keystore password |
-| `KEYSTORE_ALIAS` | Key alias |
-| `PUSHOVER_APP_TOKEN` | Pushover app token for notifications |
-| `PUSHOVER_USER_KEY` | Pushover user key for notifications |
+| Secret | Purpose | Required |
+|---|---|---|
+| `GOOGLE_EMAIL` | Google account email for Play Store downloads | For Google Play |
+| `GOOGLE_AAS_TOKEN` | Google AAS token ([how to obtain](https://github.com/EFForg/apkeep/blob/master/USAGE-google-play.md)) | For Google Play |
+| `KEYSTORE_B64` | Base64-encoded signing keystore (persistent key across builds) | Recommended |
+| `KEYSTORE_PASS` | Keystore password | Recommended |
+| `KEYSTORE_ALIAS` | Key alias | Recommended |
+| `PUSHOVER_APP_TOKEN` | Pushover app token for notifications | Optional |
+| `PUSHOVER_USER_KEY` | Pushover user key for notifications | Optional |
+
+Without Google Play credentials, the pipeline falls back to APKPure (armeabi-v7a only) and APKMirror automatically.
 
 **Generate a persistent keystore:**
 
@@ -130,7 +147,7 @@ base64 -w0 f1tv.keystore
 
 Without a persistent keystore, a new key is generated each build — you'll need to uninstall before each update.
 
-### 3. Manual trigger
+### 4. Manual trigger
 
 If the automatic download fails, you can trigger the workflow manually:
 
@@ -140,12 +157,15 @@ If the automatic download fails, you can trigger the workflow manually:
 ## Project structure
 
 ```
-.github/workflows/patch.yml  # CI pipeline (check, download, patch, release)
+.github/workflows/patch.yml   # CI pipeline (check, download, patch, release)
 scripts/
-  check_version.py            # APKMirror RSS parser (fallback version check)
-  download_apkm.py            # Playwright-based APKMirror downloader (fallback)
-  patch.sh                    # Smali patching, signing, bundling
-  install.sh                  # ADB install helper (accepts .apkm, .xapk, or directory)
+  check_version.py             # APKMirror RSS parser (fallback version check)
+  download_apkm.py             # Playwright-based APKMirror downloader (fallback)
+  patch.sh                     # Smali patching, signing, bundling
+  install.sh                   # ADB install helper (accepts .apkm, .xapk, or directory)
+  dump_device_props.sh         # Dump Android TV device profile for rs-google-play
+device_profiles/
+  nvidia_shield_tv.properties  # NVIDIA Shield TV profile for Google Play downloads
 ```
 
 ## Requirements (local use)
