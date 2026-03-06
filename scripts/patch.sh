@@ -173,6 +173,17 @@ PYEOF
 [[ $? -eq 0 ]] || die "Smali patching failed"
 ok "Smali patch applied"
 
+# ─── Patch version name ─────────────────────────────────────────────────────
+
+info "Patching version name..."
+APKTOOL_YML="${DECOMPILED}/apktool.yml"
+if [[ -f "${APKTOOL_YML}" ]]; then
+    sed -i 's/\(versionName: .*\)/\1-UHD/' "${APKTOOL_YML}"
+    ok "Version name updated (appended -UHD)"
+else
+    warn "apktool.yml not found, skipping version name patch"
+fi
+
 # ─── Rebuild with apktool ────────────────────────────────────────────────────
 
 REBUILT="${WORKDIR}/rebuilt"

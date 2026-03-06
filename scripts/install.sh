@@ -46,10 +46,10 @@ ok "Connected: ${DEVICE_MODEL}"
 # Detect correct splits
 DEVICE_ABI="$(adb shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r')"
 case "${DEVICE_ABI}" in
-    arm64-v8a)   ARCH_SPLIT="split_config.arm64_v8a.apk" ;;
-    armeabi-v7a) ARCH_SPLIT="split_config.armeabi_v7a.apk" ;;
-    x86_64)      ARCH_SPLIT="split_config.x86_64.apk" ;;
-    x86)         ARCH_SPLIT="split_config.x86.apk" ;;
+    arm64-v8a)   ABI_KEY="arm64_v8a" ;;
+    armeabi-v7a) ABI_KEY="armeabi_v7a" ;;
+    x86_64)      ABI_KEY="x86_64" ;;
+    x86)         ABI_KEY="x86" ;;
     *)           die "Unsupported ABI: ${DEVICE_ABI}" ;;
 esac
 
@@ -57,16 +57,19 @@ DEVICE_LOCALE="$(adb shell getprop persist.sys.locale 2>/dev/null | tr -d '\r')"
 [[ -z "${DEVICE_LOCALE}" ]] && DEVICE_LOCALE="$(adb shell getprop ro.product.locale 2>/dev/null | tr -d '\r')"
 [[ -z "${DEVICE_LOCALE}" ]] && DEVICE_LOCALE="en"
 LANG_CODE="$(echo "${DEVICE_LOCALE}" | cut -d'-' -f1 | cut -d'_' -f1)"
-LANG_SPLIT="split_config.${LANG_CODE}.apk"
-DPI_SPLIT="split_config.xhdpi.apk"
 
-# Collect APKs to install
+# Collect APKs to install (supports both split_config.* and config.* naming)
 INSTALL_FILES=("${APK_DIR}/base.apk")
-for split in "${ARCH_SPLIT}" "${LANG_SPLIT}" "${DPI_SPLIT}"; do
-    if [[ -f "${APK_DIR}/${split}" ]]; then
-        INSTALL_FILES+=("${APK_DIR}/${split}")
-        ok "Selected: ${split}"
-    fi
+for key in "${ABI_KEY}" "${LANG_CODE}" "xhdpi"; do
+    # Try split_config.KEY.apk (APKM format) then config.KEY.apk (XAPK format)
+    for prefix in "split_config" "config"; do
+        SPLIT="${APK_DIR}/${prefix}.${key}.apk"
+        if [[ -f "${SPLIT}" ]]; then
+            INSTALL_FILES+=("${SPLIT}")
+            ok "Selected: ${prefix}.${key}.apk"
+            break
+        fi
+    done
 done
 
 # Uninstall existing
