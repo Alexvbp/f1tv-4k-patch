@@ -45,8 +45,8 @@ jobs:
           echo "Listing available versions from APKPure..."
           apkeep -l -a com.formulaone.production -d apk-pure 2>&1 | tee /tmp/apkeep_versions.txt
 
-          # Find the latest -tv version
-          TV_VERSION=$(grep -oP '[\d.]+-\S*-tv' /tmp/apkeep_versions.txt | head -1)
+          # Find the latest -tv version (last match = most recent)
+          TV_VERSION=$(grep -oP '[\d.]+-\S*-tv' /tmp/apkeep_versions.txt | tail -1)
           if [[ -z "${TV_VERSION}" ]]; then
             echo "::warning::No TV variant found in APKPure version list"
             echo "version=" >> "$GITHUB_OUTPUT"
