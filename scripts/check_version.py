@@ -13,10 +13,20 @@ FEED_URL = (
     "f1-tv-android-tv/variant-%7B%22minapi_slug%22%3A%22minapi-25%22%7D/feed/"
 )
 
-def fetch_feed():
-    req = Request(FEED_URL, headers={"User-Agent": "Mozilla/5.0"})
-    with urlopen(req, timeout=30) as resp:
-        return resp.read().decode()
+def fetch_feed(retries: int = 3):
+    for attempt in range(retries):
+        try:
+            req = Request(FEED_URL, headers={"User-Agent": "Mozilla/5.0"})
+            with urlopen(req, timeout=30) as resp:
+                return resp.read().decode()
+        except Exception as e:
+            if attempt < retries - 1:
+                wait = 5 * (attempt + 1)
+                print(f"Attempt {attempt + 1} failed: {e}, retrying in {wait}s...", file=sys.stderr)
+                import time
+                time.sleep(wait)
+            else:
+                raise
 
 
 def parse_latest(xml_text: str) -> dict | None:
