@@ -341,22 +341,19 @@ jobs:
 
           ## Install
 
-          1. Download \`f1tv-uhd-patched.apkm\` below
-          2. Unzip it (it's a zip of APK files)
-          3. Install via ADB, selecting splits for your device:
+          Download \`f1tv-uhd-patched.apkm\` below, then use the install script:
 
           \`\`\`bash
-          # Unzip the bundle
+          ./scripts/install.sh f1tv-uhd-patched.apkm [device-ip:5555]
+          \`\`\`
+
+          Or install manually:
+          \`\`\`bash
           mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
-
-          # Install (adjust splits for your device)
-          adb install-multiple base.apk split_config.arm64_v8a.apk split_config.en.apk split_config.xhdpi.apk
+          adb install-multiple base.apk config.armeabi_v7a.apk config.en.apk config.xhdpi.apk
           \`\`\`
 
-          Or use the included install script:
-          \`\`\`bash
-          ./scripts/install.sh ./f1tv/ [device-ip:5555]
-          \`\`\`
+          See the [README](https://github.com/${{ github.repository }}#installing-on-your-android-tv) for full setup instructions.
           NOTES
           )" \
             output/f1tv-uhd-patched.apkm

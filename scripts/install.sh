@@ -2,7 +2,11 @@
 set -euo pipefail
 
 # Convenience script to install patched F1TV APKs via ADB.
-# Usage: ./install.sh <directory-with-apks> [device-ip:port]
+# Usage: ./install.sh <apkm/xapk file or directory-with-apks> [device-ip:port]
+#
+# Accepts:
+#   - .apkm or .xapk file (auto-extracts to temp dir)
+#   - Directory containing base.apk + split APKs
 #
 # If a device IP is provided, connects via ADB WiFi first.
 # Auto-detects the correct splits for the connected device.
@@ -18,16 +22,41 @@ info()  { echo -e "${CYAN}[*]${NC} $*"; }
 ok()    { echo -e "${GREEN}[+]${NC} $*"; }
 die()   { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 
+cleanup() {
+    if [[ -n "${TMPDIR_CREATED:-}" && -d "${TMPDIR_CREATED}" ]]; then
+        rm -rf "${TMPDIR_CREATED}"
+    fi
+}
+trap cleanup EXIT
+
 if [[ $# -lt 1 ]]; then
-    echo "Usage: $0 <apk-directory> [device-ip:port]"
+    echo "Usage: $0 <apkm/xapk file or apk-directory> [device-ip:port]"
     exit 1
 fi
 
-APK_DIR="$(realpath "$1")"
+INPUT="$(realpath "$1")"
 DEVICE_ADDR="${2:-}"
 
-[[ -d "${APK_DIR}" ]] || die "Directory not found: ${APK_DIR}"
-[[ -f "${APK_DIR}/base.apk" ]] || die "base.apk not found in ${APK_DIR}"
+# Handle .apkm / .xapk files — extract to temp directory
+if [[ -f "${INPUT}" ]]; then
+    case "${INPUT}" in
+        *.apkm|*.xapk)
+            TMPDIR_CREATED="$(mktemp -d /tmp/f1tv-install-XXXX)"
+            info "Extracting $(basename "${INPUT}")..."
+            unzip -q "${INPUT}" -d "${TMPDIR_CREATED}"
+            APK_DIR="${TMPDIR_CREATED}"
+            ;;
+        *)
+            die "Unsupported file type: ${INPUT} (expected .apkm or .xapk)"
+            ;;
+    esac
+elif [[ -d "${INPUT}" ]]; then
+    APK_DIR="${INPUT}"
+else
+    die "Not found: ${INPUT}"
+fi
+
+[[ -f "${APK_DIR}/base.apk" || -f "${APK_DIR}/${PACKAGE}.apk" ]] || die "No base APK found in ${APK_DIR}"
 command -v adb &>/dev/null || die "adb not found"
 
 # Connect via WiFi if address provided
@@ -58,10 +87,16 @@ DEVICE_LOCALE="$(adb shell getprop persist.sys.locale 2>/dev/null | tr -d '\r')"
 [[ -z "${DEVICE_LOCALE}" ]] && DEVICE_LOCALE="en"
 LANG_CODE="$(echo "${DEVICE_LOCALE}" | cut -d'-' -f1 | cut -d'_' -f1)"
 
+# Find the base APK (supports both naming conventions)
+if [[ -f "${APK_DIR}/base.apk" ]]; then
+    BASE="${APK_DIR}/base.apk"
+else
+    BASE="${APK_DIR}/${PACKAGE}.apk"
+fi
+
 # Collect APKs to install (supports both split_config.* and config.* naming)
-INSTALL_FILES=("${APK_DIR}/base.apk")
+INSTALL_FILES=("${BASE}")
 for key in "${ABI_KEY}" "${LANG_CODE}" "xhdpi"; do
-    # Try split_config.KEY.apk (APKM format) then config.KEY.apk (XAPK format)
     for prefix in "split_config" "config"; do
         SPLIT="${APK_DIR}/${prefix}.${key}.apk"
         if [[ -f "${SPLIT}" ]]; then

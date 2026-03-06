@@ -5,7 +5,7 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 ## How it works
 
 1. **Checks** APKPure hourly for new F1TV Android TV releases
-2. **Downloads** the APKM bundle (APKPure primary, APKMirror fallback)
+2. **Downloads** the XAPK bundle (APKPure primary, APKMirror fallback)
 3. **Patches** the `validateIsUhdSupportedDevice` smali method to always return `true`
 4. **Signs** all APKs with a consistent keystore
 5. **Publishes** the patched bundle as a GitHub Release
@@ -40,26 +40,29 @@ adb connect 192.168.1.100:5555  # Replace with your TV's IP
 Then download `f1tv-uhd-patched.apkm` from the [latest release](../../releases/latest) and install:
 
 ```bash
-# Unzip the bundle
-mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
-
 # Uninstall the original F1TV first (required — different signing key)
 adb uninstall com.formulaone.production
 
-# Install (adjust splits for your device — most Android TVs are arm64)
-adb install-multiple base.apk \
-  split_config.arm64_v8a.apk \
-  split_config.en.apk \
-  split_config.xhdpi.apk
+# Use the install script (auto-extracts and auto-detects device config)
+./scripts/install.sh f1tv-uhd-patched.apkm
+# With ADB over WiFi:
+./scripts/install.sh f1tv-uhd-patched.apkm 192.168.1.100:5555
 ```
 
-Or use the helper script which auto-detects your device's architecture and locale:
+Or install manually:
 
 ```bash
-./scripts/install.sh ./f1tv/
-# With ADB over WiFi:
-./scripts/install.sh ./f1tv/ 192.168.1.100:5555
+# Unzip the bundle
+mkdir f1tv && cd f1tv && unzip ../f1tv-uhd-patched.apkm
+
+# Install (adjust splits for your device — most Android TVs are arm64)
+adb install-multiple base.apk \
+  config.armeabi_v7a.apk \
+  config.en.apk \
+  config.xhdpi.apk
 ```
+
+The install script accepts `.apkm`, `.xapk` files, or a directory of extracted APKs.
 
 ### Option 2: Send & install directly on the TV
 
@@ -84,13 +87,15 @@ If you don't have a computer but want a one-tap solution:
 
 ### Common split APKs
 
+The bundle contains split APKs for different device configurations. You need `base.apk` plus the correct splits:
+
 | Split | When to include |
 |---|---|
-| `split_config.arm64_v8a.apk` | Most modern Android TVs (NVIDIA Shield, Chromecast, etc.) |
-| `split_config.armeabi_v7a.apk` | Older 32-bit devices |
-| `split_config.x86.apk` | Some emulators |
-| `split_config.en.apk` | English — replace `en` with your language code |
-| `split_config.xhdpi.apk` | Standard TV density — almost always needed |
+| `config.arm64_v8a.apk` / `split_config.arm64_v8a.apk` | Most modern Android TVs (NVIDIA Shield, Chromecast, etc.) |
+| `config.armeabi_v7a.apk` / `split_config.armeabi_v7a.apk` | Older 32-bit devices |
+| `config.x86.apk` / `split_config.x86.apk` | Some emulators |
+| `config.en.apk` / `split_config.en.apk` | English — replace `en` with your language code |
+| `config.xhdpi.apk` / `split_config.xhdpi.apk` | Standard TV density — almost always needed |
 
 > **Note:** You must uninstall the original F1TV app before installing the patched version (different signing key). This means you'll need to log in again.
 
@@ -127,7 +132,7 @@ Without a persistent keystore, a new key is generated each build — you'll need
 
 ### 3. Manual trigger
 
-If the automatic APKMirror download fails (Cloudflare), you can trigger the workflow manually:
+If the automatic download fails, you can trigger the workflow manually:
 
 - **With direct URL**: Go to Actions > F1TV UHD Patch > Run workflow, paste an `.apkm` URL
 - **Force rebuild**: Check the "Force rebuild" option to re-patch an existing version
@@ -137,10 +142,10 @@ If the automatic APKMirror download fails (Cloudflare), you can trigger the work
 ```
 .github/workflows/patch.yml  # CI pipeline (check, download, patch, release)
 scripts/
-  check_version.py            # RSS feed parser
-  download_apkm.py            # Playwright-based APKMirror downloader
+  check_version.py            # APKMirror RSS parser (fallback version check)
+  download_apkm.py            # Playwright-based APKMirror downloader (fallback)
   patch.sh                    # Smali patching, signing, bundling
-  install.sh                  # ADB install helper
+  install.sh                  # ADB install helper (accepts .apkm, .xapk, or directory)
 ```
 
 ## Requirements (local use)
