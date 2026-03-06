@@ -106,8 +106,6 @@ In **Settings > Secrets > Actions**, add:
 
 | Secret | Purpose |
 |---|---|
-| `GOOGLE_EMAIL` | Google account email for Play Store downloads via apkeep |
-| `GOOGLE_AAS_TOKEN` | Google AAS token for Play Store auth ([how to get one](https://github.com/nicbarker/gplaycli#authentication-token)) |
 | `KEYSTORE_B64` | Base64-encoded signing keystore (persistent key across builds) |
 | `KEYSTORE_PASS` | Keystore password |
 | `KEYSTORE_ALIAS` | Key alias |
