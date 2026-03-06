@@ -4,8 +4,8 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 
 ## How it works
 
-1. **Checks** the APKMirror RSS feed hourly for new F1TV Android TV releases
-2. **Downloads** the APKM bundle automatically via headless browser
+1. **Checks** APKPure hourly for new F1TV Android TV releases
+2. **Downloads** the APKM bundle (APKPure primary, APKMirror fallback)
 3. **Patches** the `validateIsUhdSupportedDevice` smali method to always return `true`
 4. **Signs** all APKs with a consistent keystore
 5. **Publishes** the patched bundle as a GitHub Release

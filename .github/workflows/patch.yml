@@ -21,6 +21,7 @@ permissions:
 
 env:
   APKTOOL_VERSION: "2.10.0"
+  APKEEP_VERSION: "0.18.0"
   PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
 jobs:
@@ -34,9 +35,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Restore apkeep cache
+        id: apkeep-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /usr/local/bin/apkeep
+          key: apkeep-${{ env.APKEEP_VERSION }}
+
       - name: Install apkeep
+        if: steps.apkeep-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL "https://github.com/EFForg/apkeep/releases/latest/download/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          curl -sSL "https://github.com/EFForg/apkeep/releases/download/v${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
           chmod +x /usr/local/bin/apkeep
 
       - name: Check latest TV version from APKPure
@@ -108,6 +117,13 @@ jobs:
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
 
+      - name: Save apkeep cache
+        if: always() && steps.apkeep-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /usr/local/bin/apkeep
+          key: apkeep-${{ env.APKEEP_VERSION }}
+
   patch:
     name: Download, patch & release
     needs: check
@@ -171,10 +187,18 @@ jobs:
           echo "${BT_DIR}" >> "$GITHUB_PATH"
           echo "Using build-tools: ${BT_DIR}"
 
-      - name: Install apkeep
+      - name: Restore apkeep cache (patch)
         if: ${{ !inputs.apkm_url }}
+        id: apkeep-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: /usr/local/bin/apkeep
+          key: apkeep-${{ env.APKEEP_VERSION }}
+
+      - name: Install apkeep
+        if: ${{ !inputs.apkm_url && steps.apkeep-cache.outputs.cache-hit != 'true' }}
         run: |
-          curl -sSL "https://github.com/EFForg/apkeep/releases/latest/download/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          curl -sSL "https://github.com/EFForg/apkeep/releases/download/v${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
           chmod +x /usr/local/bin/apkeep
 
       # ── Option A: Download from APKPure via apkeep ──
@@ -376,3 +400,10 @@ jobs:
         with:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
+
+      - name: Save apkeep cache (patch)
+        if: always() && steps.apkeep-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /usr/local/bin/apkeep
+          key: apkeep-${{ env.APKEEP_VERSION }}
