@@ -176,12 +176,29 @@ ok "Smali patch applied"
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
+
+# Patch apktool.yml (manifest versionName)
 APKTOOL_YML="${DECOMPILED}/apktool.yml"
 if [[ -f "${APKTOOL_YML}" ]]; then
     sed -i 's/\(versionName: .*\)/\1-UHD/' "${APKTOOL_YML}"
-    ok "Version name updated (appended -UHD)"
+    ok "Manifest versionName updated"
+fi
+
+# Patch BuildConfig.smali (in-app version string)
+BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -path '*/formulaone/*' | head -1)"
+if [[ -n "${BUILDCONFIG}" ]]; then
+    # VERSION_NAME is a const-string like: const-string v0, "3.0.47.1-SP153..."
+    sed -i '/:->VERSION_NAME:Ljava\/lang\/String;/,/const-string/{s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/}' "${BUILDCONFIG}"
+    ok "BuildConfig VERSION_NAME updated"
 else
-    warn "apktool.yml not found, skipping version name patch"
+    # Fallback: search all BuildConfig.smali files
+    BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' | head -1)"
+    if [[ -n "${BUILDCONFIG}" ]]; then
+        sed -i '/VERSION_NAME/s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/' "${BUILDCONFIG}"
+        ok "BuildConfig VERSION_NAME updated (fallback)"
+    else
+        warn "BuildConfig.smali not found, skipping in-app version patch"
+    fi
 fi
 
 # ─── Rebuild with apktool ────────────────────────────────────────────────────
