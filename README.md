@@ -87,15 +87,15 @@ If you don't have a computer but want a one-tap solution:
 
 ### Common split APKs
 
-The bundle contains split APKs for different device configurations. You need `base.apk` plus the correct splits:
+The bundle contains split APKs for different device configurations. You need `base.apk` plus the correct splits. Split names vary by source (`config.*` from APKPure, `split_config.*` from APKMirror, `com.formulaone.production.config.*` from Google Play):
 
-| Split | When to include |
+| Split (any prefix) | When to include |
 |---|---|
-| `config.arm64_v8a.apk` / `split_config.arm64_v8a.apk` | Most modern Android TVs (NVIDIA Shield, Chromecast, etc.) |
-| `config.armeabi_v7a.apk` / `split_config.armeabi_v7a.apk` | Older 32-bit devices |
-| `config.x86.apk` / `split_config.x86.apk` | Some emulators |
-| `config.en.apk` / `split_config.en.apk` | English — replace `en` with your language code |
-| `config.xhdpi.apk` / `split_config.xhdpi.apk` | Standard TV density — almost always needed |
+| `*.arm64_v8a.apk` | Most modern Android TVs (NVIDIA Shield, Chromecast, etc.) |
+| `*.armeabi_v7a.apk` | Older 32-bit devices |
+| `*.x86.apk` | Some emulators |
+| `*.en.apk` | English — replace `en` with your language code |
+| `*.xhdpi.apk` | Standard TV density — almost always needed |
 
 > **Note:** You must uninstall the original F1TV app before installing the patched version (different signing key). This means you'll need to log in again.
 

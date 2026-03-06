@@ -94,17 +94,18 @@ else
     BASE="${APK_DIR}/${PACKAGE}.apk"
 fi
 
-# Collect APKs to install (supports both split_config.* and config.* naming)
+# Collect APKs to install (supports split_config.*, config.*, and Google Play com.*.config.* naming)
 INSTALL_FILES=("${BASE}")
+SPLIT_PREFIXES=("split_config" "config" "${PACKAGE}.config")
 
 # Find ABI split (try preferred ABI first, then compatible fallbacks)
 for abi in "${ABI_KEYS[@]}"; do
     FOUND=false
-    for prefix in "split_config" "config"; do
+    for prefix in "${SPLIT_PREFIXES[@]}"; do
         SPLIT="${APK_DIR}/${prefix}.${abi}.apk"
         if [[ -f "${SPLIT}" ]]; then
             INSTALL_FILES+=("${SPLIT}")
-            ok "Selected: ${prefix}.${abi}.apk"
+            ok "Selected: $(basename "${SPLIT}")"
             FOUND=true
             break
         fi
@@ -114,11 +115,11 @@ done
 
 # Find locale and DPI splits
 for key in "${LANG_CODE}" "xhdpi"; do
-    for prefix in "split_config" "config"; do
+    for prefix in "${SPLIT_PREFIXES[@]}"; do
         SPLIT="${APK_DIR}/${prefix}.${key}.apk"
         if [[ -f "${SPLIT}" ]]; then
             INSTALL_FILES+=("${SPLIT}")
-            ok "Selected: ${prefix}.${key}.apk"
+            ok "Selected: $(basename "${SPLIT}")"
             break
         fi
     done
