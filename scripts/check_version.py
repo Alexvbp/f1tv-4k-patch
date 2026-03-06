@@ -5,6 +5,7 @@ import json
 import os
 import re
 import sys
+import time
 import xml.etree.ElementTree as ET
 from urllib.request import Request, urlopen
 
@@ -13,7 +14,8 @@ FEED_URL = (
     "f1-tv-android-tv/variant-%7B%22minapi_slug%22%3A%22minapi-25%22%7D/feed/"
 )
 
-def fetch_feed(retries: int = 3):
+
+def fetch_feed(retries: int = 5):
     for attempt in range(retries):
         try:
             req = Request(FEED_URL, headers={"User-Agent": "Mozilla/5.0"})
@@ -21,9 +23,8 @@ def fetch_feed(retries: int = 3):
                 return resp.read().decode()
         except Exception as e:
             if attempt < retries - 1:
-                wait = 5 * (attempt + 1)
-                print(f"Attempt {attempt + 1} failed: {e}, retrying in {wait}s...", file=sys.stderr)
-                import time
+                wait = 10 * (attempt + 1)
+                print(f"Attempt {attempt + 1}/{retries} failed: {e}, retrying in {wait}s...", file=sys.stderr)
                 time.sleep(wait)
             else:
                 raise
@@ -67,7 +68,24 @@ def parse_latest(xml_text: str) -> dict | None:
 
 
 def main():
-    xml_text = fetch_feed()
+    try:
+        xml_text = fetch_feed()
+    except Exception as e:
+        print(f"ERROR: Failed to fetch RSS feed after retries: {e}", file=sys.stderr)
+        # On scheduled runs, exit gracefully so the workflow doesn't spam failures
+        if os.environ.get("GITHUB_EVENT_NAME") == "schedule":
+            print("Scheduled run — skipping (will retry next hour)", file=sys.stderr)
+            github_output = os.environ.get("GITHUB_OUTPUT")
+            if github_output:
+                with open(github_output, "a") as f:
+                    f.write("version=\n")
+                    f.write("version_short=\n")
+                    f.write("release_url=\n")
+                    f.write("variant_url=\n")
+                    f.write("title=\n")
+            sys.exit(0)
+        sys.exit(1)
+
     latest = parse_latest(xml_text)
     if not latest or not latest["version"]:
         print("ERROR: Could not parse latest version from feed", file=sys.stderr)

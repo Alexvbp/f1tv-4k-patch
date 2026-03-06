@@ -58,7 +58,10 @@ jobs:
       - name: Decide whether to build
         id: decide
         run: |
-          if [[ "${{ inputs.force }}" == "true" ]]; then
+          if [[ -z "${{ steps.version.outputs.version_short }}" ]]; then
+            echo "should_build=false" >> "$GITHUB_OUTPUT"
+            echo "RSS feed unavailable, skipping"
+          elif [[ "${{ inputs.force }}" == "true" ]]; then
             echo "should_build=true" >> "$GITHUB_OUTPUT"
             echo "Forced build requested"
           elif [[ -n "${{ inputs.apkm_url }}" ]]; then
@@ -150,11 +153,56 @@ jobs:
           echo "${BT_DIR}" >> "$GITHUB_PATH"
           echo "Using build-tools: ${BT_DIR}"
 
-      # ── Option A: Download from APKMirror via Playwright ──
-      - name: Download APKM from APKMirror
+      # ── Install apkeep (shared by Google Play and APKPure steps) ──
+      - name: Install apkeep
         if: ${{ !inputs.apkm_url }}
+        run: |
+          curl -sSL "https://github.com/EFForg/apkeep/releases/latest/download/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          chmod +x /usr/local/bin/apkeep
+
+      # ── Option A: Download from Google Play via apkeep ──
+      - name: Download from Google Play
+        if: ${{ !inputs.apkm_url && env.GOOGLE_AAS_TOKEN != '' }}
+        id: download_gplay
+        run: |
+          mkdir -p download
+          echo "Downloading F1TV from Google Play (split APKs)..."
+          apkeep -a com.formulaone.production \
+            -d google-play \
+            -e "${GOOGLE_EMAIL}" \
+            -t "${GOOGLE_AAS_TOKEN}" \
+            -o split_apk=true,device=bravia_vu2 \
+            download/
+
+          # Find the downloaded directory or files
+          DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' | head -1)
+          if [[ -z "${DOWNLOADED}" ]]; then
+            echo "::error::Google Play download failed — no files found"
+            exit 1
+          fi
+
+          # If it's a directory of split APKs, bundle them into an APKM
+          if [[ -d "${DOWNLOADED}" ]]; then
+            echo "Bundling split APKs into APKM..."
+            (cd "${DOWNLOADED}" && zip -q ../f1tv-gplay.apkm *.apk)
+            DOWNLOADED="download/f1tv-gplay.apkm"
+          elif [[ "${DOWNLOADED}" == *.xapk ]]; then
+            mv "${DOWNLOADED}" "${DOWNLOADED%.xapk}.apkm"
+            DOWNLOADED="${DOWNLOADED%.xapk}.apkm"
+          fi
+          echo "Downloaded: ${DOWNLOADED}"
+          echo "apkm_path=${DOWNLOADED}" >> "$GITHUB_OUTPUT"
+        env:
+          GOOGLE_EMAIL: ${{ secrets.GOOGLE_EMAIL }}
+          GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
+        continue-on-error: true
+
+      # ── Option B: Download from APKMirror via Playwright ──
+      - name: Download APKM from APKMirror
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' }}
         id: download_auto
         run: |
+          echo "Google Play download unavailable, trying APKMirror..."
           mkdir -p download
           APKM_PATH=$(python scripts/download_apkm.py \
             "${{ needs.check.outputs.release_url }}" \
@@ -164,7 +212,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload download debug screenshots
-        if: ${{ !inputs.apkm_url && steps.download_auto.outcome != 'success' }}
+        if: ${{ !inputs.apkm_url && steps.download_auto.outcome != 'success' && steps.download_gplay.outcome != 'success' }}
         uses: actions/upload-artifact@v4
         with:
           name: download-debug-screenshots
@@ -172,7 +220,45 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      # ── Option B: Download from direct URL ──
+      # ── Option C: Fallback to apkeep (APKPure, no auth) ──
+      - name: Download via apkeep (APKPure fallback)
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.download_auto.outcome != 'success' }}
+        id: download_apkeep
+        run: |
+          echo "APKMirror download failed, trying apkeep from APKPure..."
+          mkdir -p download
+
+          # List available versions and find the TV variant
+          echo "Listing available versions..."
+          apkeep -l -a com.formulaone.production -d apk-pure 2>&1 | tee /tmp/apkeep_versions.txt
+
+          # Find the latest -tv version
+          TV_VERSION=$(grep -oP '[\d.]+-\S*-tv' /tmp/apkeep_versions.txt | head -1)
+          if [[ -z "${TV_VERSION}" ]]; then
+            echo "::warning::No TV variant found in apkeep version list"
+            # Try downloading default and hope for the best
+            apkeep -a com.formulaone.production -d apk-pure download/
+          else
+            echo "Found TV version: ${TV_VERSION}"
+            apkeep -a "com.formulaone.production@${TV_VERSION}" -d apk-pure download/
+          fi
+
+          # Find the downloaded file (could be .apk, .xapk, or .apks)
+          DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' | head -1)
+          if [[ -z "${DOWNLOADED}" ]]; then
+            echo "::error::apkeep download failed"
+            exit 1
+          fi
+          echo "Downloaded: ${DOWNLOADED}"
+          # XAPK is a zip of split APKs (same as APKM)
+          if [[ "${DOWNLOADED}" == *.xapk ]]; then
+            mv "${DOWNLOADED}" "${DOWNLOADED%.xapk}.apkm"
+            DOWNLOADED="${DOWNLOADED%.xapk}.apkm"
+          fi
+          echo "apkm_path=${DOWNLOADED}" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      # ── Option D: Download from direct URL ──
       - name: Download APKM from URL
         if: ${{ inputs.apkm_url }}
         id: download_url
@@ -186,10 +272,14 @@ jobs:
         run: |
           if [[ -n "${{ steps.download_url.outputs.apkm_path }}" ]]; then
             echo "path=${{ steps.download_url.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ steps.download_gplay.outputs.apkm_path }}" ]]; then
+            echo "path=${{ steps.download_gplay.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
           elif [[ -n "${{ steps.download_auto.outputs.apkm_path }}" ]]; then
             echo "path=${{ steps.download_auto.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
+          elif [[ -n "${{ steps.download_apkeep.outputs.apkm_path }}" ]]; then
+            echo "path=${{ steps.download_apkeep.outputs.apkm_path }}" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::Failed to obtain APKM file. Auto-download may have been blocked by Cloudflare."
+            echo "::error::All download methods failed (Google Play + APKMirror + APKPure)."
             echo "::error::Trigger the workflow manually with a direct APKM URL."
             exit 1
           fi
