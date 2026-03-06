@@ -214,7 +214,7 @@ jobs:
           # Find the downloaded file
           echo "Download directory contents:"
           ls -la download/
-          DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' | head -1)
+          DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' -print -quit)
           if [[ -z "${DOWNLOADED}" ]]; then
             echo "::error::APKPure download failed"
             exit 1

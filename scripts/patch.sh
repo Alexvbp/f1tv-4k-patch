@@ -91,7 +91,7 @@ if [[ ! -f "${BASE_APK}" ]]; then
         BASE_APK="${ALT_APK}"
     else
         # Try finding any APK that isn't a split config
-        FOUND_APK="$(find "${WORKDIR}/bundle" -maxdepth 1 -name '*.apk' ! -name 'split_*' ! -name 'config.*' | head -1)"
+        FOUND_APK="$(find "${WORKDIR}/bundle" -maxdepth 1 -name '*.apk' ! -name 'split_*' ! -name 'config.*' -print -quit)"
         if [[ -n "${FOUND_APK}" ]]; then
             info "Using $(basename "${FOUND_APK}") as base"
             BASE_APK="${FOUND_APK}"
@@ -109,7 +109,7 @@ ok "Decompiled successfully"
 # ─── Patch smali ──────────────────────────────────────────────────────────────
 
 info "Searching for DeviceSupportImpl.smali..."
-SMALI_FILE="$(find "${DECOMPILED}" -name 'DeviceSupportImpl.smali' -path '*/tiledmediaplayer/*' | head -1)"
+SMALI_FILE="$(find "${DECOMPILED}" -name 'DeviceSupportImpl.smali' -path '*/tiledmediaplayer/*' -print -quit)"
 [[ -n "${SMALI_FILE}" ]] || die "DeviceSupportImpl.smali not found in decompiled output"
 ok "Found: ${SMALI_FILE#${WORKDIR}/}"
 
@@ -185,14 +185,14 @@ if [[ -f "${APKTOOL_YML}" ]]; then
 fi
 
 # Patch BuildConfig.smali (in-app version string)
-BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -path '*/formulaone/*' | head -1)"
+BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -path '*/formulaone/*' -print -quit)"
 if [[ -n "${BUILDCONFIG}" ]]; then
     # VERSION_NAME is a const-string like: const-string v0, "3.0.47.1-SP153..."
     sed -i '/:->VERSION_NAME:Ljava\/lang\/String;/,/const-string/{s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/}' "${BUILDCONFIG}"
     ok "BuildConfig VERSION_NAME updated"
 else
     # Fallback: search all BuildConfig.smali files
-    BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' | head -1)"
+    BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -print -quit)"
     if [[ -n "${BUILDCONFIG}" ]]; then
         sed -i '/VERSION_NAME/s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/' "${BUILDCONFIG}"
         ok "BuildConfig VERSION_NAME updated (fallback)"
