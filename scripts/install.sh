@@ -72,13 +72,13 @@ ADB_DEVICES="$(adb devices 2>/dev/null | tail -n +2 | grep -w 'device' || true)"
 DEVICE_MODEL="$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')"
 ok "Connected: ${DEVICE_MODEL}"
 
-# Detect correct splits
+# Detect correct splits (with fallback for compatible ABIs)
 DEVICE_ABI="$(adb shell getprop ro.product.cpu.abi 2>/dev/null | tr -d '\r')"
 case "${DEVICE_ABI}" in
-    arm64-v8a)   ABI_KEY="arm64_v8a" ;;
-    armeabi-v7a) ABI_KEY="armeabi_v7a" ;;
-    x86_64)      ABI_KEY="x86_64" ;;
-    x86)         ABI_KEY="x86" ;;
+    arm64-v8a)   ABI_KEYS=("arm64_v8a" "armeabi_v7a") ;;
+    armeabi-v7a) ABI_KEYS=("armeabi_v7a") ;;
+    x86_64)      ABI_KEYS=("x86_64" "x86") ;;
+    x86)         ABI_KEYS=("x86") ;;
     *)           die "Unsupported ABI: ${DEVICE_ABI}" ;;
 esac
 
@@ -96,7 +96,24 @@ fi
 
 # Collect APKs to install (supports both split_config.* and config.* naming)
 INSTALL_FILES=("${BASE}")
-for key in "${ABI_KEY}" "${LANG_CODE}" "xhdpi"; do
+
+# Find ABI split (try preferred ABI first, then compatible fallbacks)
+for abi in "${ABI_KEYS[@]}"; do
+    FOUND=false
+    for prefix in "split_config" "config"; do
+        SPLIT="${APK_DIR}/${prefix}.${abi}.apk"
+        if [[ -f "${SPLIT}" ]]; then
+            INSTALL_FILES+=("${SPLIT}")
+            ok "Selected: ${prefix}.${abi}.apk"
+            FOUND=true
+            break
+        fi
+    done
+    ${FOUND} && break
+done
+
+# Find locale and DPI splits
+for key in "${LANG_CODE}" "xhdpi"; do
     for prefix in "split_config" "config"; do
         SPLIT="${APK_DIR}/${prefix}.${key}.apk"
         if [[ -f "${SPLIT}" ]]; then
