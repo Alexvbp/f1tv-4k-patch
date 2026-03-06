@@ -212,17 +212,30 @@ jobs:
           apkeep -a "com.formulaone.production@${TV_VERSION}" -d apk-pure download/
 
           # Find the downloaded file
+          echo "Download directory contents:"
+          ls -la download/
           DOWNLOADED=$(find download/ -maxdepth 1 -name 'com.formulaone.production*' | head -1)
           if [[ -z "${DOWNLOADED}" ]]; then
             echo "::error::APKPure download failed"
             exit 1
           fi
           echo "Downloaded: ${DOWNLOADED}"
+
           # XAPK is a zip of split APKs (same as APKM)
           if [[ "${DOWNLOADED}" == *.xapk ]]; then
             mv "${DOWNLOADED}" "${DOWNLOADED%.xapk}.apkm"
             DOWNLOADED="${DOWNLOADED%.xapk}.apkm"
           fi
+
+          # Single APK: wrap it into an APKM bundle so patch.sh can handle it
+          if [[ "${DOWNLOADED}" == *.apk ]]; then
+            echo "Single APK detected, wrapping as APKM bundle..."
+            mkdir -p download/bundle
+            cp "${DOWNLOADED}" download/bundle/base.apk
+            (cd download/bundle && zip -q ../f1tv-apkpure.apkm base.apk)
+            DOWNLOADED="download/f1tv-apkpure.apkm"
+          fi
+
           echo "apkm_path=${DOWNLOADED}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 

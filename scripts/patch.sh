@@ -77,10 +77,29 @@ else
     warn "No info.json found, proceeding anyway..."
 fi
 
-# ─── Decompile base.apk ──────────────────────────────────────────────────────
+# ─── Locate base APK ─────────────────────────────────────────────────────────
+
+info "Bundle contents:"
+ls -la "${WORKDIR}/bundle/"
 
 BASE_APK="${WORKDIR}/bundle/base.apk"
-[[ -f "${BASE_APK}" ]] || die "base.apk not found in bundle"
+if [[ ! -f "${BASE_APK}" ]]; then
+    # XAPK bundles from APKPure name the main APK by package name
+    ALT_APK="${WORKDIR}/bundle/${PACKAGE}.apk"
+    if [[ -f "${ALT_APK}" ]]; then
+        info "Found ${PACKAGE}.apk, using as base"
+        BASE_APK="${ALT_APK}"
+    else
+        # Try finding any APK that isn't a split config
+        FOUND_APK="$(find "${WORKDIR}/bundle" -maxdepth 1 -name '*.apk' ! -name 'split_*' ! -name 'config.*' | head -1)"
+        if [[ -n "${FOUND_APK}" ]]; then
+            info "Using $(basename "${FOUND_APK}") as base"
+            BASE_APK="${FOUND_APK}"
+        else
+            die "base.apk not found in bundle"
+        fi
+    fi
+fi
 
 DECOMPILED="${WORKDIR}/decompiled"
 info "Decompiling base.apk with apktool..."
@@ -181,8 +200,10 @@ ok "Dex injection complete"
 BUNDLE_DIR="${WORKDIR}/bundle"
 ALL_APKS=("${PATCHED_BASE}")
 while IFS= read -r -d '' split; do
+    # Skip the original base APK (already replaced by patched version)
+    [[ "$(realpath "${split}")" == "$(realpath "${BASE_APK}")" ]] && continue
     ALL_APKS+=("${split}")
-done < <(find "${BUNDLE_DIR}" -maxdepth 1 -name 'split_*.apk' -print0)
+done < <(find "${BUNDLE_DIR}" -maxdepth 1 -name '*.apk' -print0)
 
 info "Found ${#ALL_APKS[@]} APK(s) to process (base + ${#ALL_APKS[@]}-1 splits)"
 
