@@ -2,7 +2,7 @@ name: F1TV UHD Patch
 
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "0 */3 * * *"
 
   workflow_dispatch:
     inputs:
