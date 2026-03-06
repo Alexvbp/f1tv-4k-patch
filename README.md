@@ -69,7 +69,7 @@ The install script accepts `.apkm`, `.xapk` files, or a directory of extracted A
 No computer needed after the initial download.
 
 1. Download `f1tv-uhd-patched.apkm` from the [latest release](../../releases/latest) on your phone
-2. Install [Split APKs Installer (SAI)](https://play.google.com/store/apps/details?id=com.aefyr.sai) on your Android TV (available on Play Store)
+2. Install [Split APKs Installer (SAI)](https://play.google.com/store/apps/details?id=com.mtv.sai&hl=en) on your Android TV (available on Play Store)
 3. Transfer the `.apkm` file to your TV via:
    - **USB drive** — copy the file to a USB stick, plug it into the TV
    - **Send Files to TV** — install [this app](https://play.google.com/store/apps/details?id=com.yablio.sendfilestotv) on both your phone and TV, send the file over WiFi
