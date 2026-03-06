@@ -40,12 +40,12 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-${{ env.APKEEP_VERSION }}
+          key: apkeep-v2-${{ env.APKEEP_VERSION }}
 
       - name: Install apkeep
         if: steps.apkeep-cache.outputs.cache-hit != 'true'
         run: |
-          curl -sSL "https://github.com/EFForg/apkeep/releases/download/v${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          curl -sSL "https://github.com/EFForg/apkeep/releases/download/${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
           chmod +x /usr/local/bin/apkeep
 
       - name: Check latest TV version from APKPure
@@ -122,7 +122,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-${{ env.APKEEP_VERSION }}
+          key: apkeep-v2-${{ env.APKEEP_VERSION }}
 
   patch:
     name: Download, patch & release
@@ -193,12 +193,12 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-${{ env.APKEEP_VERSION }}
+          key: apkeep-v2-${{ env.APKEEP_VERSION }}
 
       - name: Install apkeep
         if: ${{ !inputs.apkm_url && steps.apkeep-cache.outputs.cache-hit != 'true' }}
         run: |
-          curl -sSL "https://github.com/EFForg/apkeep/releases/download/v${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
+          curl -sSL "https://github.com/EFForg/apkeep/releases/download/${APKEEP_VERSION}/apkeep-x86_64-unknown-linux-gnu" -o /usr/local/bin/apkeep
           chmod +x /usr/local/bin/apkeep
 
       # ── Option A: Download from APKPure via apkeep ──
@@ -406,4 +406,4 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: /usr/local/bin/apkeep
-          key: apkeep-${{ env.APKEEP_VERSION }}
+          key: apkeep-v2-${{ env.APKEEP_VERSION }}
