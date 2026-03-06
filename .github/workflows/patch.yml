@@ -24,76 +24,8 @@ env:
   PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
 jobs:
-  check:
-    name: Check for new version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      version_short: ${{ steps.version.outputs.version_short }}
-      release_url: ${{ steps.version.outputs.release_url }}
-      variant_url: ${{ steps.version.outputs.variant_url }}
-      should_build: ${{ steps.decide.outputs.should_build }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Check latest version from RSS
-        id: version
-        run: python scripts/check_version.py
-
-      - name: Check if release already exists
-        id: existing
-        run: |
-          if gh release view "v${{ steps.version.outputs.version_short }}" &>/dev/null; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Decide whether to build
-        id: decide
-        run: |
-          if [[ -z "${{ steps.version.outputs.version_short }}" ]]; then
-            echo "should_build=false" >> "$GITHUB_OUTPUT"
-            echo "RSS feed unavailable, skipping"
-          elif [[ "${{ inputs.force }}" == "true" ]]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "Forced build requested"
-          elif [[ -n "${{ inputs.apkm_url }}" ]]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "Manual APKM URL provided"
-          elif [[ "${{ steps.existing.outputs.exists }}" == "false" ]]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            echo "New version: v${{ steps.version.outputs.version_short }}"
-          else
-            echo "should_build=false" >> "$GITHUB_OUTPUT"
-            echo "Release v${{ steps.version.outputs.version_short }} already exists, skipping"
-          fi
-
-      # Notify on new version detected
-      - name: Notify via Pushover (new version)
-        if: steps.decide.outputs.should_build == 'true' && !inputs.force
-        run: |
-          curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
-               --form-string "user=$PUSHOVER_USER_KEY" \
-               --form-string "title=F1TV UHD: New version detected" \
-               --form-string "message=Version ${{ steps.version.outputs.version }} found. Patching started." \
-               --form-string "priority=0" \
-               --form-string "sound=pushover" \
-               https://api.pushover.net/1/messages.json || true
-        env:
-          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
-          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
-
   patch:
     name: Download, patch & release
-    needs: check
-    if: needs.check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -198,15 +130,20 @@ jobs:
         continue-on-error: true
 
       # ── Option B: Download from APKMirror via Playwright ──
-      - name: Download APKM from APKMirror
+      - name: Check latest version from RSS
         if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' }}
+        id: rss
+        run: python scripts/check_version.py
+
+      - name: Download APKM from APKMirror
+        if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.rss.outputs.release_url != '' }}
         id: download_auto
         run: |
           echo "Google Play download unavailable, trying APKMirror..."
           mkdir -p download
           APKM_PATH=$(python scripts/download_apkm.py \
-            "${{ needs.check.outputs.release_url }}" \
-            --variant-url "${{ needs.check.outputs.variant_url }}" \
+            "${{ steps.rss.outputs.release_url }}" \
+            --variant-url "${{ steps.rss.outputs.variant_url }}" \
             -o download)
           echo "apkm_path=${APKM_PATH}" >> "$GITHUB_OUTPUT"
         continue-on-error: true
@@ -284,9 +221,67 @@ jobs:
             exit 1
           fi
 
+      # ── Extract version from downloaded APK ──
+      - name: Extract version from APK
+        id: version
+        run: |
+          APKM="${{ steps.apkm.outputs.path }}"
+          TMPDIR=$(mktemp -d)
+          unzip -q "${APKM}" base.apk -d "${TMPDIR}"
+
+          # Extract versionName from base.apk using aapt2
+          VERSION_FULL=$(aapt2 dump badging "${TMPDIR}/base.apk" | grep -oP "versionName='\K[^']+")
+          VERSION_SHORT=$(echo "${VERSION_FULL}" | grep -oP '^[\d]+(?:\.[\d]+)+')
+
+          echo "version=${VERSION_FULL}" >> "$GITHUB_OUTPUT"
+          echo "version_short=${VERSION_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "Detected version: ${VERSION_FULL} (short: ${VERSION_SHORT})"
+          rm -rf "${TMPDIR}"
+
+      # ── Check if release already exists ──
+      - name: Check if release already exists
+        id: existing
+        run: |
+          if gh release view "v${{ steps.version.outputs.version_short }}" &>/dev/null; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decide whether to patch
+        id: decide
+        run: |
+          if [[ "${{ inputs.force }}" == "true" ]]; then
+            echo "should_patch=true" >> "$GITHUB_OUTPUT"
+            echo "Forced build requested"
+          elif [[ "${{ steps.existing.outputs.exists }}" == "false" ]]; then
+            echo "should_patch=true" >> "$GITHUB_OUTPUT"
+            echo "New version: v${{ steps.version.outputs.version_short }}"
+          else
+            echo "should_patch=false" >> "$GITHUB_OUTPUT"
+            echo "Release v${{ steps.version.outputs.version_short }} already exists, skipping"
+          fi
+
+      # Notify on new version detected
+      - name: Notify via Pushover (new version)
+        if: steps.decide.outputs.should_patch == 'true' && !inputs.force
+        run: |
+          curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
+               --form-string "user=$PUSHOVER_USER_KEY" \
+               --form-string "title=F1TV UHD: New version detected" \
+               --form-string "message=Version ${{ steps.version.outputs.version }} found. Patching started." \
+               --form-string "priority=0" \
+               --form-string "sound=pushover" \
+               https://api.pushover.net/1/messages.json || true
+        env:
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+
       # ── Decode persistent keystore from secret (optional) ──
       - name: Set up keystore
-        if: ${{ env.KEYSTORE_B64 != '' }}
+        if: steps.decide.outputs.should_patch == 'true' && env.KEYSTORE_B64 != ''
         run: |
           echo "${KEYSTORE_B64}" | base64 -d > /tmp/patch.keystore
           echo "KEYSTORE_PATH=/tmp/patch.keystore" >> "$GITHUB_ENV"
@@ -295,6 +290,7 @@ jobs:
 
       # ── Patch ──
       - name: Patch APKM
+        if: steps.decide.outputs.should_patch == 'true'
         run: |
           chmod +x scripts/patch.sh
           bash scripts/patch.sh "${{ steps.apkm.outputs.path }}" output/
@@ -305,18 +301,20 @@ jobs:
 
       # ── Upload artifacts (always, even if release creation fails) ──
       - name: Upload patched APKs
+        if: steps.decide.outputs.should_patch == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: f1tv-uhd-patched-${{ needs.check.outputs.version_short }}
+          name: f1tv-uhd-patched-${{ steps.version.outputs.version_short }}
           path: output/
           retention-days: 90
 
       # ── Create GitHub Release ──
       - name: Create release
+        if: steps.decide.outputs.should_patch == 'true'
         id: release
         run: |
-          TAG="v${{ needs.check.outputs.version_short }}"
-          TITLE="F1TV UHD Patched - ${{ needs.check.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version_short }}"
+          TITLE="F1TV UHD Patched - ${{ steps.version.outputs.version }}"
 
           # Delete existing release if force-rebuilding
           if [[ "${{ inputs.force }}" == "true" ]]; then
@@ -329,7 +327,7 @@ jobs:
             --notes "$(cat <<NOTES
           Patched F1TV Android TV app with UHD/4K enabled.
 
-          **Version:** \`${{ needs.check.outputs.version }}\`
+          **Version:** \`${{ steps.version.outputs.version }}\`
 
           ## Install
 
@@ -359,12 +357,12 @@ jobs:
 
       # ── Notify: success ──
       - name: Notify via Pushover (success)
-        if: success()
+        if: steps.decide.outputs.should_patch == 'true' && success()
         run: |
           curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
                --form-string "user=$PUSHOVER_USER_KEY" \
                --form-string "title=F1TV UHD: Patch ready!" \
-               --form-string "message=Version ${{ needs.check.outputs.version }} patched and released." \
+               --form-string "message=Version ${{ steps.version.outputs.version }} patched and released." \
                --form-string "url=${{ steps.release.outputs.release_url }}" \
                --form-string "url_title=Download from GitHub" \
                --form-string "priority=0" \
@@ -381,7 +379,7 @@ jobs:
           curl -s --form-string "token=$PUSHOVER_APP_TOKEN" \
                --form-string "user=$PUSHOVER_USER_KEY" \
                --form-string "title=F1TV UHD: Patch failed" \
-               --form-string "message=Version ${{ needs.check.outputs.version }} failed to patch. Check workflow logs." \
+               --form-string "message=Pipeline failed. Check workflow logs." \
                --form-string "url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
                --form-string "url_title=View workflow run" \
                --form-string "priority=0" \
