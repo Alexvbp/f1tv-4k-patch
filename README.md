@@ -21,7 +21,7 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 4. Enable **USB debugging** (and **ADB over network** if installing wirelessly)
 5. Note the **IP address** shown under Settings > Network & Internet, or Device Preferences > About > Status
 
-### Option 1: ADB from a computer (recommended)
+### Option 1: ADB from a computer (recommended and tested)
 
 Install ADB on your computer ([download platform-tools](https://developer.android.com/tools/releases/platform-tools)) and add it to your PATH.
 
@@ -64,7 +64,7 @@ adb install-multiple base.apk \
 
 The install script accepts `.apkm`, `.xapk` files, or a directory of extracted APKs.
 
-### Option 2: Send & install directly on the TV
+### Option 2: Send & install directly on the TV (not tested yet)
 
 No computer needed after the initial download.
 
@@ -76,7 +76,7 @@ No computer needed after the initial download.
    - **Google Drive / cloud** — upload to Drive, open it from the TV's file manager
 4. Open SAI on the TV, select the `.apkm` file, and install
 
-### Option 3: Wireless ADB apps
+### Option 3: Wireless ADB apps (not tested yet)
 
 If you don't have a computer but want a one-tap solution:
 
