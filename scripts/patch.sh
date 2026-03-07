@@ -215,11 +215,12 @@ PATCHED_BASE="${WORKDIR}/base-patched.apk"
 cp "${BASE_APK}" "${PATCHED_BASE}"
 
 mkdir -p "${WORKDIR}/inject_tmp"
-(cd "${WORKDIR}/inject_tmp" && unzip -q "${WORKDIR}/rebuilt/base-rebuilt.apk" 'classes*.dex')
+(cd "${WORKDIR}/inject_tmp" && unzip -q "${WORKDIR}/rebuilt/base-rebuilt.apk" 'classes*.dex' 'AndroidManifest.xml')
 
 zip -qd "${PATCHED_BASE}" 'META-INF/*' 2>/dev/null || true
 zip -qd "${PATCHED_BASE}" 'classes*.dex' 2>/dev/null || true
-(cd "${WORKDIR}/inject_tmp" && zip -q -0 "${PATCHED_BASE}" classes*.dex)
+zip -qd "${PATCHED_BASE}" 'AndroidManifest.xml' 2>/dev/null || true
+(cd "${WORKDIR}/inject_tmp" && zip -q -0 "${PATCHED_BASE}" classes*.dex AndroidManifest.xml)
 
 ok "Dex injection complete"
 
