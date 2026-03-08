@@ -173,6 +173,53 @@ PYEOF
 [[ $? -eq 0 ]] || die "Smali patching failed"
 ok "Smali patch applied"
 
+# ─── Patch video quality button ──────────────────────────────────────────────
+
+info "Searching for DiagnosticsPreferenceManagerImpl.smali..."
+DIAG_SMALI="$(find "${DECOMPILED}" -name 'DiagnosticsPreferenceManagerImpl.smali' -print -quit)"
+if [[ -n "${DIAG_SMALI}" ]]; then
+    ok "Found: ${DIAG_SMALI#${WORKDIR}/}"
+    info "Patching isVideoQualityEnabled to always return true..."
+    python3 - "${DIAG_SMALI}" << 'PYEOF'
+import sys, re
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+pattern = (
+    r'\.method public isVideoQualityEnabled\(\)Z'
+    r'.*?'
+    r'\.end method'
+)
+
+replacement = """.method public isVideoQualityEnabled()Z
+    .locals 1
+
+    # Quality patch: always return true
+    const/4 v0, 0x1
+
+    return v0
+.end method"""
+
+new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+
+if count == 0:
+    print("ERROR: Could not find isVideoQualityEnabled method to patch!", file=sys.stderr)
+    sys.exit(1)
+
+with open(smali_path, 'w') as f:
+    f.write(new_content)
+
+print(f"Patched isVideoQualityEnabled ({count} occurrence(s))")
+PYEOF
+
+    [[ $? -eq 0 ]] || die "Video quality patch failed"
+    ok "Video quality patch applied"
+else
+    warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping quality patch"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
