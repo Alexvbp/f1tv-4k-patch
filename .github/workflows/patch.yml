@@ -75,7 +75,12 @@ jobs:
         id: existing
         if: steps.version.outputs.version_short != ''
         run: |
-          if gh release view "v${{ steps.version.outputs.version_short }}" &>/dev/null; then
+          TAG="v${{ steps.version.outputs.version_short }}"
+          # Dev branch uses a separate tag
+          if [[ "${{ github.ref_name }}" != "main" ]]; then
+            TAG="${TAG}-${{ github.ref_name }}"
+          fi
+          if gh release view "${TAG}" &>/dev/null; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
@@ -426,6 +431,15 @@ jobs:
         run: |
           TAG="v${{ needs.check.outputs.version_short }}"
           TITLE="F1TV UHD Patched - ${{ needs.check.outputs.version }}"
+          PRERELEASE_FLAG=""
+
+          # Non-main branches get a separate pre-release
+          BRANCH="${{ github.ref_name }}"
+          if [[ "${BRANCH}" != "main" ]]; then
+            TAG="${TAG}-${BRANCH}"
+            TITLE="${TITLE} (${BRANCH})"
+            PRERELEASE_FLAG="--prerelease"
+          fi
 
           # Delete existing release if force-rebuilding
           if [[ "${{ inputs.force }}" == "true" ]]; then
@@ -448,10 +462,13 @@ jobs:
 
           gh release create "${TAG}" \
             --title "${TITLE}" \
+            --target "${BRANCH}" \
+            ${PRERELEASE_FLAG} \
             --notes "$(cat <<NOTES
           Patched F1TV Android TV app with UHD/4K enabled.
 
           **Version:** \`${{ needs.check.outputs.version }}\`
+          **Branch:** \`${BRANCH}\`
           **${SOURCE_NOTE}**
 
           ## Install

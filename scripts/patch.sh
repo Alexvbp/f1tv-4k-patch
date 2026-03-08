@@ -173,13 +173,13 @@ PYEOF
 [[ $? -eq 0 ]] || die "Smali patching failed"
 ok "Smali patch applied"
 
-# ─── Patch video quality button ──────────────────────────────────────────────
+# ─── Patch diagnostics preferences ──────────────────────────────────────────
 
 info "Searching for DiagnosticsPreferenceManagerImpl.smali..."
 DIAG_SMALI="$(find "${DECOMPILED}" -name 'DiagnosticsPreferenceManagerImpl.smali' -print -quit)"
 if [[ -n "${DIAG_SMALI}" ]]; then
     ok "Found: ${DIAG_SMALI#${WORKDIR}/}"
-    info "Patching isVideoQualityEnabled to always return true..."
+    info "Patching diagnostics methods to always return true..."
     python3 - "${DIAG_SMALI}" << 'PYEOF'
 import sys, re
 
@@ -187,37 +187,53 @@ smali_path = sys.argv[1]
 with open(smali_path, 'r') as f:
     content = f.read()
 
-pattern = (
-    r'\.method public isVideoQualityEnabled\(\)Z'
-    r'.*?'
-    r'\.end method'
-)
+# Methods to patch: all return boolean and should always return true
+methods_to_enable = [
+    "isVideoQualityEnabled",
+    "isScreenCaptureEnabled",
+    "isVideoStreamTypeOverlayEnabled",
+    "isPlayerTypeOverlayEnabled",
+    "isOverlayLogsEnabled",
+]
 
-replacement = """.method public isVideoQualityEnabled()Z
+total = 0
+for method in methods_to_enable:
+    pattern = (
+        rf'\.method public {re.escape(method)}\(\)Z'
+        r'.*?'
+        r'\.end method'
+    )
+
+    replacement = f""".method public {method}()Z
     .locals 1
 
-    # Quality patch: always return true
+    # Diagnostics patch: always return true
     const/4 v0, 0x1
 
     return v0
 .end method"""
 
-new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+    content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+    if count > 0:
+        print(f"  Patched {method}")
+        total += count
+    else:
+        print(f"  WARNING: {method} not found, skipping")
 
-if count == 0:
-    print("ERROR: Could not find isVideoQualityEnabled method to patch!", file=sys.stderr)
+if total == 0:
+    print("ERROR: No diagnostics methods were patched!", file=sys.stderr)
     sys.exit(1)
 
 with open(smali_path, 'w') as f:
-    f.write(new_content)
+    f.write(content)
 
-print(f"Patched isVideoQualityEnabled ({count} occurrence(s))")
+print(f"Patched {total} diagnostics method(s)")
 PYEOF
 
-    [[ $? -eq 0 ]] || die "Video quality patch failed"
-    ok "Video quality patch applied"
+    [[ $? -eq 0 ]] || die "Diagnostics patch failed"
+    ok "Diagnostics patch applied"
 else
-    warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping quality patch"
+    warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping diagnostics patch"
 fi
 
 # ─── Patch version name ─────────────────────────────────────────────────────
