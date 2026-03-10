@@ -339,6 +339,54 @@ else
     warn "DecoderCapability.smali not found, skipping ClearVR patch"
 fi
 
+# ─── Disable NVIDIA post-process workaround in ClearVR ────────────────────
+
+info "Searching for Quirks.smali..."
+QUIRKS_SMALI="$(find "${DECOMPILED}" -name 'Quirks.smali' -path '*/tiledmedia/clearvrdecoder/*' -print -quit)"
+if [[ -n "${QUIRKS_SMALI}" ]]; then
+    ok "Found: ${QUIRKS_SMALI#${WORKDIR}/}"
+    info "Disabling NVIDIA no-post-process workaround..."
+    python3 - "${QUIRKS_SMALI}" << 'PYEOF'
+import sys, re
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+# Patch deviceNeedsNoPostProcessWorkaround() to always return false.
+# On NVIDIA devices this sets "no-post-process"=1 on the decoder MediaFormat,
+# which may cause ClearVR to select a lower quality tile tier.
+pattern = (
+    r'\.method public static deviceNeedsNoPostProcessWorkaround\(\)Z'
+    r'.*?'
+    r'\.end method'
+)
+
+replacement = """.method public static deviceNeedsNoPostProcessWorkaround()Z
+    .locals 1
+
+    const/4 v0, 0x0
+
+    return v0
+.end method"""
+
+content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+
+if count == 0:
+    print("WARNING: deviceNeedsNoPostProcessWorkaround not found, skipping")
+else:
+    print(f"Patched deviceNeedsNoPostProcessWorkaround → always false")
+
+with open(smali_path, 'w') as f:
+    f.write(content)
+PYEOF
+
+    [[ $? -eq 0 ]] || die "NVIDIA workaround patch failed"
+    ok "NVIDIA workaround patch applied"
+else
+    warn "Quirks.smali not found, skipping NVIDIA workaround patch"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
