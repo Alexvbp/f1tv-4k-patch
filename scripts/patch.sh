@@ -274,6 +274,71 @@ else
     warn "TvApplication.smali not found, skipping model spoof"
 fi
 
+# ─── Patch ClearVR decoder capabilities (force 4K tiled streaming) ─────────
+
+info "Searching for DecoderCapability.smali..."
+DECODER_CAP_SMALI="$(find "${DECOMPILED}" -name 'DecoderCapability.smali' -path '*/tiledmedia/*' -print -quit)"
+if [[ -n "${DECODER_CAP_SMALI}" ]]; then
+    ok "Found: ${DECODER_CAP_SMALI#${WORKDIR}/}"
+    info "Patching ClearVR decoder capability reporting..."
+    python3 - "${DECODER_CAP_SMALI}" << 'PYEOF'
+import sys
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+# In getAsCoreProtobuf(), override the values sent to the ClearVR backend.
+# The SDK probes local hardware and reports capabilities via protobuf.
+# Devices without a ClearVR quirk profile report 0 for tile slots/rows/cols,
+# causing the backend to serve a lower resolution tier (2880x1620 instead of 3840x2160).
+
+patches = [
+    # Override secureDecoderMaximumTileSlotCount: 0 → 16 (matches Oculus Go/Quest profiles)
+    (
+        '    iget v2, p0, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;->maxNumberOfSecureHEVCSamples:I',
+        '    const/16 v2, 0x10',
+        'secureDecoderMaximumTileSlotCount → 16'
+    ),
+    # Override maxTileRows: 0 → 5 (matches Chromecast/Google TV profile)
+    (
+        '    iget v2, p0, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;->maxTileRows:I',
+        '    const/4 v2, 0x5',
+        'maxTileRows → 5'
+    ),
+    # Override maxTileColumns: 0 → 5 (matches Chromecast/Google TV profile)
+    (
+        '    iget v2, p0, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;->maxTileColumns:I',
+        '    const/4 v2, 0x5',
+        'maxTileColumns → 5'
+    ),
+]
+
+patched = 0
+for old, new, desc in patches:
+    if old in content:
+        content = content.replace(old, new, 1)
+        print(f"  Patched {desc}")
+        patched += 1
+    else:
+        print(f"  WARNING: Could not find pattern for {desc}, skipping")
+
+if patched == 0:
+    print("ERROR: No ClearVR capability patches applied!", file=sys.stderr)
+    sys.exit(1)
+
+with open(smali_path, 'w') as f:
+    f.write(content)
+
+print(f"Patched {patched}/3 ClearVR decoder capabilities")
+PYEOF
+
+    [[ $? -eq 0 ]] || die "ClearVR capability patch failed"
+    ok "ClearVR capability patch applied"
+else
+    warn "DecoderCapability.smali not found, skipping ClearVR patch"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
