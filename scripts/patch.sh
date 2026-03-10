@@ -236,6 +236,44 @@ else
     warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping diagnostics patch"
 fi
 
+# ─── Spoof device model in request header ────────────────────────────────────
+
+info "Searching for TvApplication.smali..."
+TVAPP_SMALI="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"
+if [[ -n "${TVAPP_SMALI}" ]]; then
+    ok "Found: ${TVAPP_SMALI#${WORKDIR}/}"
+    info "Spoofing device model as Chromecast in request header..."
+    python3 - "${TVAPP_SMALI}" << 'PYEOF'
+import sys
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+# Replace Build.MODEL read with hardcoded "chromecast" string
+# Original: sget-object v1, Landroid/os/Build;->MODEL:Ljava/lang/String;
+# We replace the MODEL read + toLowerCase block with a const-string
+old = '    sget-object v1, Landroid/os/Build;->MODEL:Ljava/lang/String;'
+new = '    const-string v1, "Chromecast"'
+
+if old not in content:
+    print("ERROR: Could not find Build.MODEL in getRequestHeader!", file=sys.stderr)
+    sys.exit(1)
+
+content = content.replace(old, new, 1)
+
+with open(smali_path, 'w') as f:
+    f.write(content)
+
+print("Spoofed Build.MODEL as 'Chromecast' in request header")
+PYEOF
+
+    [[ $? -eq 0 ]] || die "Model spoof patch failed"
+    ok "Model spoof patch applied"
+else
+    warn "TvApplication.smali not found, skipping model spoof"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
