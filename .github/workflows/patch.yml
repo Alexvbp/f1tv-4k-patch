@@ -260,7 +260,7 @@ jobs:
           apkeep -d google-play \
             -e "${GOOGLE_EMAIL}" \
             -t "${GOOGLE_AAS_TOKEN}" \
-            -o "device=generic_armv7_tv,split_apk=true" \
+            -o "device=bravia_vu2,split_apk=true" \
             --accept-tos \
             -a "com.formulaone.production" \
             download_armv7/
