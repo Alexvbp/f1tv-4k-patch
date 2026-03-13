@@ -22,7 +22,7 @@ permissions:
 env:
   APKTOOL_VERSION: "2.10.0"
   APKEEP_VERSION: "0.18.0"
-  APKEEP_CUSTOM_TAG: "v0.18.0-shield"
+  APKEEP_CUSTOM_TAG: "v0.18.1-shield"
   PLAYWRIGHT_BROWSERS_PATH: /home/runner/.cache/ms-playwright
 
 jobs:
@@ -260,15 +260,15 @@ jobs:
           apkeep -d google-play \
             -e "${GOOGLE_EMAIL}" \
             -t "${GOOGLE_AAS_TOKEN}" \
-            -o "device=bravia_vu2,split_apk=true" \
+            -o "device=generic_armv7_tv,split_apk=true" \
             --accept-tos \
             -a "com.formulaone.production" \
             download_armv7/
 
-          ARMV7_SPLIT="$(find download_armv7/ -name 'split_config.armeabi_v7a.apk' -print -quit)"
+          # Google Play names splits as com.formulaone.production.config.<abi>.apk
+          ARMV7_SPLIT="$(find download_armv7/ -name '*armeabi_v7a*' -o -name '*armeabi-v7a*' | head -1)"
           if [[ -z "${ARMV7_SPLIT}" ]]; then
-            # Check inside the package directory
-            ARMV7_SPLIT="$(find download_armv7/com.formulaone.production/ -name 'split_config.armeabi_v7a.apk' -print -quit 2>/dev/null)"
+            ARMV7_SPLIT="$(find download_armv7/com.formulaone.production/ \( -name '*armeabi_v7a*' -o -name '*armeabi-v7a*' \) -print -quit 2>/dev/null)"
           fi
 
           if [[ -n "${ARMV7_SPLIT}" ]]; then
