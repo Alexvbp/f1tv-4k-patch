@@ -255,6 +255,50 @@ jobs:
           GOOGLE_EMAIL: ${{ secrets.GOOGLE_EMAIL }}
           GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
 
+      # ── Download armeabi-v7a split (for 32-bit device compatibility) ──
+      - name: Download armeabi-v7a split
+        if: ${{ steps.download_gplay.outcome == 'success' && env.GOOGLE_EMAIL != '' }}
+        id: download_armv7
+        run: |
+          echo "Downloading armeabi-v7a split from Google Play (32-bit profile)..."
+          mkdir -p download_armv7
+          apkeep -d google-play \
+            -e "${GOOGLE_EMAIL}" \
+            -t "${GOOGLE_AAS_TOKEN}" \
+            -o "device=generic_armv7_tv,split_apk=true" \
+            --accept-tos \
+            -a "com.formulaone.production" \
+            download_armv7/
+
+          ARMV7_SPLIT="$(find download_armv7/ -name 'split_config.armeabi_v7a.apk' -print -quit)"
+          if [[ -z "${ARMV7_SPLIT}" ]]; then
+            # Check inside the package directory
+            ARMV7_SPLIT="$(find download_armv7/com.formulaone.production/ -name 'split_config.armeabi_v7a.apk' -print -quit 2>/dev/null)"
+          fi
+
+          if [[ -n "${ARMV7_SPLIT}" ]]; then
+            echo "Found armeabi-v7a split: ${ARMV7_SPLIT}"
+            # Copy into the main bundle directory
+            MAIN_SPLIT_DIR="download/com.formulaone.production"
+            if [[ -d "${MAIN_SPLIT_DIR}" ]]; then
+              cp "${ARMV7_SPLIT}" "${MAIN_SPLIT_DIR}/"
+              echo "Merged armeabi-v7a split into main bundle"
+              # Rebuild the APKM with the extra split
+              (cd "${MAIN_SPLIT_DIR}" && zip -q ../f1tv-gplay.apkm *.apk)
+              echo "Rebuilt APKM bundle with armeabi-v7a"
+            else
+              echo "::warning::Main split directory not found, cannot merge armeabi-v7a split"
+            fi
+          else
+            echo "::warning::armeabi-v7a split not found in 32-bit download"
+            echo "Download contents:"
+            find download_armv7/ -name '*.apk' -ls
+          fi
+        continue-on-error: true
+        env:
+          GOOGLE_EMAIL: ${{ secrets.GOOGLE_EMAIL }}
+          GOOGLE_AAS_TOKEN: ${{ secrets.GOOGLE_AAS_TOKEN }}
+
       # ── Option B: Download from APKPure via apkeep ──
       - name: Download from APKPure
         if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' }}
@@ -405,7 +449,11 @@ jobs:
 
           SOURCE="${{ steps.apkm.outputs.source }}"
           if [[ "${SOURCE}" == "google-play" ]]; then
-            SOURCE_NOTE="Source: Google Play (arm64-v8a native)"
+            if [[ "${{ steps.download_armv7.outcome }}" == "success" ]]; then
+              SOURCE_NOTE="Source: Google Play (arm64-v8a + armeabi-v7a)"
+            else
+              SOURCE_NOTE="Source: Google Play (arm64-v8a native)"
+            fi
           elif [[ "${SOURCE}" == "apkpure" ]]; then
             SOURCE_NOTE="Source: APKPure (armeabi-v7a)"
           else
