@@ -387,6 +387,72 @@ else
     warn "Quirks.smali not found, skipping NVIDIA workaround patch"
 fi
 
+# ─── Bypass UHD device whitelist for ClearVR tiled streams ─────────────────
+
+info "Searching for DeviceSupportImpl.smali..."
+DEVICE_SUPPORT_SMALI="$(find "${DECOMPILED}" -name 'DeviceSupportImpl.smali' -path '*/tiledmediaplayer/*' -print -quit)"
+if [[ -n "${DEVICE_SUPPORT_SMALI}" ]]; then
+    ok "Found: ${DEVICE_SUPPORT_SMALI#${WORKDIR}/}"
+    info "Patching validateIsUhdSupportedDevice to always return true..."
+    python3 - "${DEVICE_SUPPORT_SMALI}" << 'PYEOF'
+import sys, re
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+# The F1TV app has a client-side UHD device whitelist (configPROD.json → uhdSupport)
+# that only allows specific brand/product combinations to receive 4K ClearVR tiled streams.
+# NVIDIA Shield is NOT on this list. Patch validateIsUhdSupportedDevice() to always
+# return Pair(true, null), bypassing the whitelist check entirely.
+pattern = (
+    r'\.method private final validateIsUhdSupportedDevice\(Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;\)Lkotlin/Pair;'
+    r'.*?'
+    r'\.end method'
+)
+
+replacement = """.method private final validateIsUhdSupportedDevice(Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;)Lkotlin/Pair;
+    .locals 3
+    .annotation system Ldalvik/annotation/Signature;
+        value = {
+            "(",
+            "Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;",
+            ")",
+            "Lkotlin/Pair<",
+            "Ljava/lang/Boolean;",
+            "Ljava/lang/String;",
+            ">;"
+        }
+    .end annotation
+
+    new-instance v0, Lkotlin/Pair;
+
+    sget-object v1, Ljava/lang/Boolean;->TRUE:Ljava/lang/Boolean;
+
+    const/4 v2, 0x0
+
+    invoke-direct {v0, v1, v2}, Lkotlin/Pair;-><init>(Ljava/lang/Object;Ljava/lang/Object;)V
+
+    return-object v0
+.end method"""
+
+content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+
+if count == 0:
+    print("WARNING: validateIsUhdSupportedDevice not found, skipping")
+else:
+    print("Patched validateIsUhdSupportedDevice → always returns true")
+
+with open(smali_path, 'w') as f:
+    f.write(content)
+PYEOF
+
+    [[ $? -eq 0 ]] || die "UHD whitelist bypass patch failed"
+    ok "UHD whitelist bypass patch applied"
+else
+    warn "DeviceSupportImpl.smali not found, skipping UHD whitelist bypass"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
