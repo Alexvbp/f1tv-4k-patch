@@ -125,13 +125,20 @@ for key in "${LANG_CODE}" "xhdpi"; do
     done
 done
 
-# Uninstall existing
+# Try to update in-place first (preserves app data / login).
+# Only uninstall if the signing key differs (install-multiple will fail with INSTALL_FAILED_UPDATE_INCOMPATIBLE).
 if adb shell pm list packages 2>/dev/null | grep -q "${PACKAGE}"; then
-    info "Uninstalling existing F1TV..."
+    info "Existing F1TV found, attempting update..."
+    if adb install-multiple -r "${INSTALL_FILES[@]}" 2>/dev/null; then
+        ok "F1TV UHD patched app updated successfully (data preserved)!"
+        info "Open F1TV and check Settings for the UHD option."
+        exit 0
+    fi
+    warn "Update failed (different signing key?) — uninstalling and reinstalling..."
     adb uninstall "${PACKAGE}" >/dev/null 2>&1 || true
 fi
 
-# Install
+# Fresh install
 info "Installing ${#INSTALL_FILES[@]} APK(s)..."
 adb install-multiple "${INSTALL_FILES[@]}" || die "Installation failed"
 
