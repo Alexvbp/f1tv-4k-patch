@@ -176,6 +176,14 @@ Only needed if running scripts locally outside CI:
 - Java, apktool, zipalign, apksigner
 - ADB (for install.sh)
 
+## Applied patches
+
+| Patch | File | Method | What it does |
+|---|---|---|---|
+| UHD unlock | `DeviceSupportImpl.smali` | `validateIsUhdSupportedDevice()` | Always returns `Pair(true, null)` so 4K streams are served |
+| Quality button | `DiagnosticsPreferenceManagerImpl.smali` | `isVideoQualityEnabled()` | Always returns `true` so the quality selector is visible |
+| Direct-to-view | `RenderAPIConfig.smali` | `getNRPTextureBlitMode()` | Amlogic only (runtime check): bypasses Tiledmedia GPU tile composition, decoder outputs directly to SurfaceView. Fixes ~13% frame drops on Amlogic devices. Other devices use the default rendering path. |
+
 ## License
 
 For personal/educational use only.
