@@ -34,11 +34,11 @@ jobs:
       version_short: ${{ steps.version.outputs.version_short }}
       should_build: ${{ steps.decide.outputs.should_build }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Restore apkeep cache
         id: apkeep-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /usr/local/bin/apkeep
           key: apkeep-v2-${{ env.APKEEP_VERSION }}
@@ -125,7 +125,7 @@ jobs:
 
       - name: Save apkeep cache
         if: always() && steps.apkeep-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /usr/local/bin/apkeep
           key: apkeep-v2-${{ env.APKEEP_VERSION }}
@@ -136,9 +136,9 @@ jobs:
     if: needs.check.outputs.should_build == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -152,7 +152,7 @@ jobs:
 
       - name: Restore Playwright cache
         id: pw-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-${{ steps.pw.outputs.version }}
@@ -167,7 +167,7 @@ jobs:
 
       - name: Restore apktool cache
         id: apktool-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
@@ -196,7 +196,7 @@ jobs:
       - name: Restore custom apkeep cache
         if: ${{ !inputs.apkm_url }}
         id: apkeep-custom-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: /usr/local/bin/apkeep
           key: apkeep-custom-${{ env.APKEEP_CUSTOM_TAG }}
@@ -362,7 +362,7 @@ jobs:
 
       - name: Upload download debug screenshots
         if: ${{ !inputs.apkm_url && steps.download_gplay.outcome != 'success' && steps.download_apkpure.outcome != 'success' && steps.download_auto.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: download-debug-screenshots
           path: download/debug_*
@@ -419,7 +419,7 @@ jobs:
 
       # ── Upload artifacts (always, even if release creation fails) ──
       - name: Upload patched APKs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: f1tv-uhd-patched-${{ needs.check.outputs.version_short }}
           path: output/
@@ -525,21 +525,21 @@ jobs:
       # ── Save caches (runs even if job fails) ──
       - name: Save Playwright cache
         if: always() && steps.pw-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
           key: playwright-${{ steps.pw.outputs.version }}
 
       - name: Save apktool cache
         if: always() && steps.apktool-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /usr/local/bin/apktool*
           key: apktool-${{ env.APKTOOL_VERSION }}
 
       - name: Save custom apkeep cache
         if: always() && steps.apkeep-custom-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: /usr/local/bin/apkeep
           key: apkeep-custom-${{ env.APKEEP_CUSTOM_TAG }}
