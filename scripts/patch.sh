@@ -154,44 +154,35 @@ TRUE_PAIR_STUB = """
 
 patched = 0
 
-# 1. Patch validateIsUhdSupportedDevice — bypasses the UHD device brand/product whitelist
-#    (only Google Chromecast and Amazon Fire TV are whitelisted in configPROD.json)
-pattern = (
-    r'\.method private final validateIsUhdSupportedDevice\('
-    r'Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;\)Lkotlin/Pair;'
-    r'.*?'
-    r'\.end method'
-)
-replacement = (".method private final validateIsUhdSupportedDevice("
-    "Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;)Lkotlin/Pair;"
-    + TRUE_PAIR_STUB)
-content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
-if count:
-    print(f"  Patched validateIsUhdSupportedDevice → always true")
-    patched += count
-else:
-    print("  WARNING: validateIsUhdSupportedDevice not found")
+# Patch all 4 validators to always return Pair(true, null):
+#   1. validateTmSdkSupport — ClearVR SDK secure HEVC decoder capability check
+#      (queries VideoCapabilities.areSizeAndRateSupported(3840, 2160, 50.0) on secure decoder)
+#   2. validateLowRamDeviceSupport — ActivityManager.isLowRamDevice() check
+#   3. validateApiLevelSupport — Android API level minimum check
+#   4. validateIsUhdSupportedDevice — UHD device brand/product whitelist from configPROD.json
+validators = [
+    "validateTmSdkSupport",
+    "validateLowRamDeviceSupport",
+    "validateApiLevelSupport",
+    "validateIsUhdSupportedDevice",
+]
 
-# 2. Patch validateTmSdkSupport — bypasses the ClearVR SDK hardware capability check.
-#    This calls TiledPlayer.isDeviceCapableOf() which queries the secure HEVC decoder via
-#    Android's VideoCapabilities.areSizeAndRateSupported(3840, 2160, 50.0).
-#    Some devices (NVIDIA Shield) may not report correct capabilities for the secure decoder,
-#    causing the tiled player to be completely disabled before the UHD whitelist is even checked.
-pattern = (
-    r'\.method private final validateTmSdkSupport\('
-    r'Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;\)Lkotlin/Pair;'
-    r'.*?'
-    r'\.end method'
-)
-replacement = (".method private final validateTmSdkSupport("
-    "Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;)Lkotlin/Pair;"
-    + TRUE_PAIR_STUB)
-content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
-if count:
-    print(f"  Patched validateTmSdkSupport → always true")
-    patched += count
-else:
-    print("  WARNING: validateTmSdkSupport not found")
+for name in validators:
+    pattern = (
+        r'\.method private final ' + name + r'\('
+        r'Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;\)Lkotlin/Pair;'
+        r'.*?'
+        r'\.end method'
+    )
+    replacement = (f".method private final {name}("
+        "Lcom/avs/f1/ui/tiledmediaplayer/DeviceCapabilities;)Lkotlin/Pair;"
+        + TRUE_PAIR_STUB)
+    content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+    if count:
+        print(f"  Patched {name} → always true")
+        patched += count
+    else:
+        print(f"  WARNING: {name} not found")
 
 if patched == 0:
     print("ERROR: No validators were patched!", file=sys.stderr)
