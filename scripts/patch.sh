@@ -456,14 +456,14 @@ fi
 # ─── Patch NRP blit mode to NATIVE_ANDROID_DIRECT_TO_VIEW ──────────────────
 #
 # Tiledmedia's default blit mode (AUTO_DETECT) routes decoded frames through
-# GPU tile composition via SurfaceTexture → EGL → swapBuffers. On Amlogic
-# devices (Xiaomi TV Box S, etc.) this path drops ~13% of frames.
+# GPU tile composition via SurfaceTexture → EGL → swapBuffers. This causes
+# frame drops on weaker GPUs and may fail on devices that don't support
+# intermediate resolutions during the quality ramp (e.g. 2560x1620).
 # The SDK has a built-in NATIVE_ANDROID_DIRECT_TO_VIEW mode that bypasses
 # GPU composition and outputs the decoder directly to the SurfaceView.
-# Fix: on Amlogic devices, return NATIVE_ANDROID_DIRECT_TO_VIEW.
-#      on other devices (NVIDIA Shield, etc.), use the original value.
+# Fix: always return NATIVE_ANDROID_DIRECT_TO_VIEW for all devices.
 
-info "Patching NRP blit mode to direct-to-view (Amlogic only)..."
+info "Patching NRP blit mode to direct-to-view (all devices)..."
 RENDER_CONFIG="$(find "${DECOMPILED}" -name 'RenderAPIConfig.smali' -path '*/tiledmedia/*' -print -quit 2>/dev/null || true)"
 
 if [[ -n "${RENDER_CONFIG}" && -f "${RENDER_CONFIG}" ]]; then
@@ -474,45 +474,21 @@ path = sys.argv[1]
 with open(path, 'r') as f:
     content = f.read()
 
-# Patch getNRPTextureBlitMode() to return NATIVE_ANDROID_DIRECT_TO_VIEW on Amlogic,
-# or the original configured value on other devices.
-# Original (.locals 1):
+# Patch getNRPTextureBlitMode() to always return NATIVE_ANDROID_DIRECT_TO_VIEW.
+# Original:
 #   iget-object v0, p0, ...->nrpTextureBlitMode
 #   return-object v0
 #
-# Patched (.locals 2):
-#   check Build.HARDWARE.contains("amlogic")
-#   if true -> return NATIVE_ANDROID_DIRECT_TO_VIEW
-#   else   -> return original nrpTextureBlitMode
+# Patched:
+#   return NATIVE_ANDROID_DIRECT_TO_VIEW unconditionally
 
 old = """    iget-object v0, p0, Lcom/tiledmedia/clearvrview/RenderAPIConfig;->nrpTextureBlitMode:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
 
-    return-object v0
-.end method
+    return-object v0"""
 
-.method public getNrpColorSpace"""
+new = """    sget-object v0, Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;->NATIVE_ANDROID_DIRECT_TO_VIEW:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
 
-new = """    sget-object v0, Landroid/os/Build;->HARDWARE:Ljava/lang/String;
-
-    const-string v1, "amlogic"
-
-    invoke-virtual {v0, v1}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
-
-    move-result v0
-
-    if-eqz v0, :use_default
-
-    sget-object v0, Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;->NATIVE_ANDROID_DIRECT_TO_VIEW:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
-
-    return-object v0
-
-    :use_default
-    iget-object v0, p0, Lcom/tiledmedia/clearvrview/RenderAPIConfig;->nrpTextureBlitMode:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
-
-    return-object v0
-.end method
-
-.method public getNrpColorSpace"""
+    return-object v0"""
 
 if old not in content:
     print(f"Could not find getNRPTextureBlitMode pattern in {path}", file=sys.stderr)
@@ -520,20 +496,12 @@ if old not in content:
 
 content = content.replace(old, new, 1)
 
-# Also bump .locals 1 to .locals 2 in this method (need v1 for the "amlogic" string)
-method_header = '.method public getNRPTextureBlitMode()Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;\n    .locals 1'
-method_header_new = '.method public getNRPTextureBlitMode()Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;\n    .locals 2'
-if method_header in content:
-    content = content.replace(method_header, method_header_new, 1)
-else:
-    print(f"  Warning: could not bump .locals in getNRPTextureBlitMode", file=sys.stderr)
-
 with open(path, 'w') as f:
     f.write(content)
 print(f"  Patched {path}")
 PYEOF
 
-    [[ $? -eq 0 ]] && ok "NRP direct-to-view patch applied (Amlogic only)" || warn "NRP direct-to-view patch failed"
+    [[ $? -eq 0 ]] && ok "NRP direct-to-view patch applied (all devices)" || warn "NRP direct-to-view patch failed"
 else
     warn "RenderAPIConfig.smali not found, skipping direct-to-view patch"
 fi
