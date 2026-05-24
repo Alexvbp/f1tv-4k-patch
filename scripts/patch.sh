@@ -220,6 +220,60 @@ else
     warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping quality patch"
 fi
 
+# ─── Patch device spoofing (NEW) ─────────────────────────────────────────────
+#
+# Device Spoof Patch: Makes any device appear as Google TV to unlock 4K
+# This patch modifies DeviceCapabilities constructor to return hardcoded
+# "Google"/"sabrina_prod_stable" instead of actual Build.BRAND/Build.PRODUCT
+# This makes non-whitelisted devices (Shield TV Pro, etc.) appear whitelisted
+# and enables full 4K streaming on all devices.
+
+info "Searching for DeviceCapabilities.smali..."
+DEVICE_CAP="$(find "${DECOMPILED}" -name 'DeviceCapabilities.smali' -path '*/tiledmediaplayer/*' -print -quit)"
+if [[ -n "${DEVICE_CAP}" ]]; then
+    ok "Found: ${DEVICE_CAP#${WORKDIR}/}"
+    info "Patching device spoofing (Google TV)..."
+    python3 - "${DEVICE_CAP}" << 'PYEOF'
+import sys, re
+
+smali_path = sys.argv[1]
+with open(smali_path, 'r') as f:
+    content = f.read()
+
+# Check if already patched
+if '"Google"' in content and '"sabrina_prod_stable"' in content:
+    print("Device spoof already applied, skipping...")
+    sys.exit(0)
+
+# Replace sget-object Build.BRAND with const-string "Google"
+# Using flexible register regex to handle different app versions
+content = re.sub(r'sget-object (p\d+), Landroid/os/Build;->BRAND:Ljava/lang/String;', r'const-string \1, "Google"', content)
+
+# Remove the checkNotNullExpressionValue call for BRAND
+content = re.sub(r'const-string v\d+, "BRAND"\s+invoke-static \{(p\d+), v\d+\}, Lkotlin/jvm/internal/Intrinsics;->checkNotNullExpressionValue\(Ljava/lang/Object;Ljava/lang/String;\)V', '', content, flags=re.MULTILINE)
+
+# Replace sget-object Build.PRODUCT with const-string "sabrina_prod_stable"
+content = re.sub(r'sget-object (p\d+), Landroid/os/Build;->PRODUCT:Ljava/lang/String;', r'const-string \1, "sabrina_prod_stable"', content)
+
+# Remove the checkNotNullExpressionValue call for PRODUCT
+content = re.sub(r'const-string v\d+, "PRODUCT"\s+invoke-static \{(p\d+), v\d+\}, Lkotlin/jvm/internal/Intrinsics;->checkNotNullExpressionValue\(Ljava/lang/Object;Ljava/lang/String;\)V', '', content, flags=re.MULTILINE)
+
+# Verify patch was applied
+if '"Google"' not in content or '"sabrina_prod_stable"' not in content:
+    print("ERROR: Device spoof patch failed!", file=sys.stderr)
+    sys.exit(1)
+
+with open(smali_path, 'w') as f:
+    f.write(content)
+
+print("Device spoof patch applied successfully!")
+PYEOF
+
+    [[ $? -eq 0 ]] && ok "Device spoof patch applied (all devices now appear as Google TV)" || warn "Device spoof patch failed"
+else
+    warn "DeviceCapabilities.smali not found, skipping device spoof patch"
+fi
+
 # ─── Patch NRP blit mode to NATIVE_ANDROID_DIRECT_TO_VIEW ──────────────────
 #
 # Tiledmedia's default blit mode (AUTO_DETECT) routes decoded frames through
@@ -303,6 +357,69 @@ PYEOF
     [[ $? -eq 0 ]] && ok "NRP direct-to-view patch applied (Amlogic only)" || warn "NRP direct-to-view patch failed"
 else
     warn "RenderAPIConfig.smali not found, skipping direct-to-view patch"
+fi
+
+# ─── Patch physical resolution detection (Shield 4K Fix) ──────────────────
+#
+# Forces the SDK to see a 4K panel (3840x2160) instead of the 1080p UI resolution.
+# This prevents the "1.5x cap" (2880x1620) on NVIDIA Shield.
+
+info "Patching TrueTVDisplaySizeHelper to force 4K detection..."
+TRUE_TV_HELPER="$(find "${DECOMPILED}" -name 'TrueTVDisplaySizeHelper.smali' -path '*/tiledmedia/*' -print -quit)"
+
+if [[ -n "${TRUE_TV_HELPER}" ]]; then
+    python3 - "${TRUE_TV_HELPER}" << 'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path, 'r') as f:
+    content = f.read()
+
+# Replace getDefaultDisplaySize with a hardcoded 4K return
+pattern = (
+    r'\.method private static getDefaultDisplaySize\(Landroid/content/Context;\)Landroid/graphics/Point;'
+    r'.*?'
+    r'\.end method'
+)
+
+replacement = """.method private static getDefaultDisplaySize(Landroid/content/Context;)Landroid/graphics/Point;
+    .locals 3
+
+    # UHD Patch: Always report 3840x2160
+    sget-object v0, Lcom/tiledmedia/clearvrview/TrueTVDisplaySizeHelper;->trueDisplaySize:Landroid/graphics/Point;
+
+    if-eqz v0, :return_val
+
+    new-instance v0, Landroid/graphics/Point;
+
+    const/16 v1, 0xf00
+
+    const/16 v2, 0x870
+
+    invoke-direct {v0, v1, v2}, Landroid/graphics/Point;-><init>(II)V
+
+    sput-object v0, Lcom/tiledmedia/clearvrview/TrueTVDisplaySizeHelper;->trueDisplaySize:Landroid/graphics/Point;
+
+    :return_val
+    sget-object v0, Lcom/tiledmedia/clearvrview/TrueTVDisplaySizeHelper;->trueDisplaySize:Landroid/graphics/Point;
+
+    return-object v0
+.end method"""
+
+new_content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
+
+if count == 0:
+    print(f"Could not find getDefaultDisplaySize in {path}", file=sys.stderr)
+    sys.exit(1)
+
+with open(path, 'w') as f:
+    f.write(new_content)
+print(f"  Patched {path}")
+PYEOF
+
+    [[ $? -eq 0 ]] && ok "4K physical resolution patch applied" || warn "4K physical resolution patch failed"
+else
+    warn "TrueTVDisplaySizeHelper.smali not found, skipping 4K detection patch"
 fi
 
 # ─── Patch version name ─────────────────────────────────────────────────────
