@@ -802,42 +802,99 @@ body = body.replace('    return-object v0', """    # UHD Patch (debug logs): INF
 
     return-object v0""", 1)
 content = content[:m.start(2)] + body + content[m.end(2):]
+
+# getWarningConfig() is the SDK default (ClearVRCoreWrapper.<clinit>) and is what
+# actually applies: the app only calls enableLogs()/getDisabledConfig() when the
+# hidden "tiled player log upload" diagnostic is on. WARN -> INFO.
+pat2 = r'(\.method public static getWarningConfig\(\)Lcom/tiledmedia/clearvrplayer/LogConfig;)(.*?)(\.end method)'
+m2 = re.search(pat2, content, flags=re.DOTALL)
+if not m2 or m2.group(2).count('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:') != 1:
+    print("ERROR: getWarningConfig shape unexpected", file=sys.stderr); sys.exit(1)
+body2 = m2.group(2).replace('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:', 'Lcom/tiledmedia/clearvrenums/LogLevel;->INFO:', 1)
+content = content[:m2.start(2)] + body2 + content[m2.end(2):]
+
 with open(path, 'w') as f:
     f.write(content)
-print("getDisabledConfig -> INFO level, stderr/console on")
+print("getDisabledConfig -> INFO + console; getWarningConfig (default) -> INFO")
 PYEOF
     then
         die "Debug logs patch failed"
     fi
-    ok "ClearVR player logs enabled (INFO -> logcat)"
+
+    # The Java SDK (TMLogger) never writes to logcat itself: every message goes
+    # into the native core via clearVRCoreLog(). Mirror it to logcat (tag
+    # "ClearVR") so decoder configuration, EGL render targets, audio probes and
+    # reconfigure decisions show up in `adb logcat` / capture_logs.sh.
+    TMLOGGER_SMALI="$(find "${DECOMPILED}" -name 'TMLogger.smali' -path '*/tiledmedia/clearvrhelpers/*' -print -quit)"
+    [[ -n "${TMLOGGER_SMALI}" ]] || die "TMLogger.smali not found"
+    if ! python3 - "${TMLOGGER_SMALI}" << 'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+old = '    invoke-static {p1, p0, p2}, Lcom/tiledmedia/clearvrcorewrapper/ClearVRCoreWrapper;->clearVRCoreLog(Ljava/lang/String;Lcom/tiledmedia/clearvrenums/LogComponent;I)V'
+n = content.count(old)
+if n != 1:
+    print(f"ERROR: expected 1 clearVRCoreLog sink call in TMLogger.writeToLog, found {n}", file=sys.stderr); sys.exit(1)
+new = """    # UHD Patch (debug logs): mirror the SDK log to logcat
+    const-string v0, "ClearVR"
+
+    invoke-static {v0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+""" + old
+content = content.replace(old, new, 1)
+with open(path, 'w') as f:
+    f.write(content)
+print("TMLogger.writeToLog -> also Log.i(\"ClearVR\", msg)")
+PYEOF
+    then
+        die "TMLogger logcat mirror patch failed"
+    fi
+    ok "ClearVR player logs enabled (INFO -> logcat, tag ClearVR / GoLog)"
 fi
 
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
 
+# "-UHD", or "-UHD-dbg" for F1TV_DEBUG_LOGS builds (visible in the app's side
+# menu next to the version, so a tester can tell which bundle is installed).
+VER_SUFFIX="-UHD"
+[[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]] && VER_SUFFIX="-UHD-dbg"
+
 # Patch apktool.yml (manifest versionName)
 APKTOOL_YML="${DECOMPILED}/apktool.yml"
 if [[ -f "${APKTOOL_YML}" ]]; then
-    sed -i 's/\(versionName: .*\)/\1-UHD/' "${APKTOOL_YML}"
+    sed -i "s/\(versionName: .*\)/\1${VER_SUFFIX}/" "${APKTOOL_YML}"
     ok "Manifest versionName updated"
 fi
 
-# Patch BuildConfig.smali (in-app version string)
-BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -path '*/formulaone/*' -print -quit)"
-if [[ -n "${BUILDCONFIG}" ]]; then
-    # VERSION_NAME is a const-string like: const-string v0, "3.0.47.1-SP153..."
-    sed -i '/:->VERSION_NAME:Ljava\/lang\/String;/,/const-string/{s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/}' "${BUILDCONFIG}"
-    ok "BuildConfig VERSION_NAME updated"
-else
-    # Fallback: search all BuildConfig.smali files
-    BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -print -quit)"
-    if [[ -n "${BUILDCONFIG}" ]]; then
-        sed -i '/VERSION_NAME/s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/' "${BUILDCONFIG}"
-        ok "BuildConfig VERSION_NAME updated (fallback)"
+# Patch the in-app version string. R8 inlines BuildConfig.VERSION_NAME, so the
+# string shown in the side menu is the const-string in
+# TvApplication.getBuildVersionName() (the old BuildConfig sed never matched).
+TVAPP_SMALI="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"
+if [[ -n "${TVAPP_SMALI}" ]]; then
+    if python3 - "${TVAPP_SMALI}" "${VER_SUFFIX}" << 'PYEOF'
+import sys, re
+path, suffix = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    content = f.read()
+pat = r'(\.method public getBuildVersionName\(\)Ljava/lang/String;.*?const-string(?:/jumbo)? v0, ")([^"]*)(")'
+content, n = re.subn(pat, lambda m: m.group(1) + m.group(2) + suffix + m.group(3), content, count=1, flags=re.DOTALL)
+if n != 1:
+    print("getBuildVersionName const-string not found", file=sys.stderr); sys.exit(1)
+with open(path, 'w') as f:
+    f.write(content)
+PYEOF
+    then
+        ok "In-app version string updated (${VER_SUFFIX})"
     else
-        warn "BuildConfig.smali not found, skipping in-app version patch"
+        warn "Could not patch TvApplication.getBuildVersionName — in-app version stays stock"
     fi
+else
+    warn "TvApplication.smali not found, skipping in-app version patch"
 fi
 
 # ─── Self-check: every patch left its marker in the smali ───────────────────
@@ -884,6 +941,7 @@ if [[ "${F1TV_DISPLAY_HDR_SPOOF:-1}" != "0" ]]; then
 fi
 if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
     verify_marker 'LogConfig.smali' '*/tiledmedia/clearvrplayer/*' 'UHD Patch \(debug logs\)' 'ClearVR player logs enabled'
+    verify_marker 'TMLogger.smali'  '*/tiledmedia/clearvrhelpers/*' 'const-string v0, "ClearVR"'   'ClearVR log mirrored to logcat'
 fi
 # The removed model spoof must stay removed: Build.MODEL must still be read in getRequestHeader.
 if f="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"; then

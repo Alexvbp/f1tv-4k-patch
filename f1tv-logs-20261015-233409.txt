@@ -1,0 +1,210 @@
+=== Device ===
+ro.product.manufacturer          NVIDIA
+ro.product.model                 SHIELD Android TV
+ro.product.device                mdarcy
+ro.board.platform                tegra
+ro.build.version.release         11
+ro.build.version.sdk             30
+ro.product.cpu.abilist           arm64-v8a,armeabi-v7a,armeabi
+
+=== F1TV package ===
+primaryCpuAbi=arm64-v8a
+versionName=3.0.49.4-SP166.4.1-release-R54.2-tv-UHD
+splits=[base, config.arm64_v8a, config.en, config.xhdpi]
+
+=== Display / HDR ===
+DisplayDeviceInfo{"Built-in Screen": uniqueId="local:0", 3840 x 2160, modeId 21, defaultModeId 21, supportedModes [{id=1, width=3840, height=2160, fps=29.97003
+HdrCapabilities{mSupportedHdrTypes=[2], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}
+
+=== EGL extensions (BT2020 colorspaces decide the HDR render path) ===
+EGL_EXT_gl_colorspace_bt2020_linear
+EGL_EXT_gl_colorspace_bt2020_pq
+EGL_EXT_gl_colorspace_display_p3
+EGL_EXT_gl_colorspace_display_p3_linear
+EGL_EXT_gl_colorspace_scrgb
+EGL_EXT_gl_colorspace_scrgb_linear
+
+=== Decoders (HEVC video, AC-3 / E-AC3 audio) ===
+Decoder "OMX.Nvidia.DOVI.decode.secure" supports
+Media type 'video/hevc':
+Decoder "OMX.Nvidia.h265.decode.secure" supports
+Decoder "OMX.google.hevc.decoder" supports
+Decoder "OMX.google.vp9.decoder" supports
+Media type 'video/hevc':
+
+=== Audio output (surround / passthrough encodings) ===
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 3, 40000000 (default): 15
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 4, 40000000 (default): 15
+Current: 2 (speaker): 5, 4 (headset): 4, 8 (headphone): 4, 80 (bt_a2dp): 4, 400 (hdmi): 5, 1000 (digital_dock): 4, 4000000 (usb_headset): 2, 40000000 (default): 5
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 1, 40000000 (default): 7
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 2, 40000000 (default): 7
+Current: 400 (hdmi): 7, 40000000 (default): 7
+[DeviceInfo: type:0x400 (hdmi) name: addr:aux1_audio codec: 0]
+Devices: hdmi
+mHdmiAudioSystemClient=null
+mHdmiCecSink=true
+mHdmiCecVolumeControlEnabled=false
+mHdmiPlaybackClient=android.hardware.hdmi.HdmiPlaybackClient@ea9796d
+mHdmiSystemAudioSupported=false
+mHdmiTvClient=null
+
+Waiting for com.formulaone.production to run (open F1TV on the TV)...
+F1TV pid 26093. Now play the stream; recording for 180s max (Ctrl+C to stop early)...
+=== Logcat ===
+10-15 23:34:10.982 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.079 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.103 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.130 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.137 W/View    (26093): requestLayout() improperly called by com.avs.f1.ui.widget.ColumnConstraintLayout{21f21a1 VFE...... .F....ID 40,0-1784,732 #7f0b0635 app:id/top_layout} during layout: running second layout pass
+10-15 23:34:11.157 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.165 W/View    (26093): requestLayout() improperly called by com.avs.f1.ui.widget.PlayResumeBar{dcc43fa V.ED..... ......I. 0,0-0,0 #7f0b0482 app:id/play_head} during layout: running second layout pass
+10-15 23:34:11.192 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.216 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.342 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.364 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.408 D/AppCompatDelegate(26093): Checking for metadata for AppLocalesMetadataHolderService : Service not found
+10-15 23:34:11.408 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.442 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.463 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.479 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.501 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.514 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:11.518 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:11.552 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.563 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:34:11.564 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:34:11.564 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:34:11.564 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:34:11.611 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.718 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.735 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:11.756 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.888 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.902 D/vulkan  (26093): searching for layers in '/data/app/~~On7sqmHcMwgfCCVRBzB7YA==/com.formulaone.production-aL-fx3vMpKrgVMeMMO1uYw==/lib/arm64'
+10-15 23:34:11.903 D/vulkan  (26093): searching for layers in '/data/app/~~On7sqmHcMwgfCCVRBzB7YA==/com.formulaone.production-aL-fx3vMpKrgVMeMMO1uYw==/base.apk!/lib/arm64-v8a'
+10-15 23:34:11.904 D/vulkan  (26093): searching for layers in '/data/app/~~On7sqmHcMwgfCCVRBzB7YA==/com.formulaone.production-aL-fx3vMpKrgVMeMMO1uYw==/split_config.arm64_v8a.apk!/lib/arm64-v8a'
+10-15 23:34:11.904 D/vulkan  (26093): searching for layers in '/data/app/~~On7sqmHcMwgfCCVRBzB7YA==/com.formulaone.production-aL-fx3vMpKrgVMeMMO1uYw==/split_config.en.apk!/lib/arm64-v8a'
+10-15 23:34:11.904 D/vulkan  (26093): searching for layers in '/data/app/~~On7sqmHcMwgfCCVRBzB7YA==/com.formulaone.production-aL-fx3vMpKrgVMeMMO1uYw==/split_config.xhdpi.apk!/lib/arm64-v8a'
+10-15 23:34:11.908 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.916 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:34:11.916 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:34:11.916 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:34:11.916 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:34:11.929 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.955 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:11.968 W/Gralloc4(26093): allocator 3.x is not supported
+10-15 23:34:11.971 W/Gralloc3(26093): allocator 3.x is not supported
+10-15 23:34:11.992 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.119 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.124 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory clearkey
+10-15 23:34:12.133 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory default
+10-15 23:34:12.139 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory widevine
+10-15 23:34:12.140 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.142 I/DrmUtils(26093): found android.hardware.drm@1.1::IDrmFactory clearkey
+10-15 23:34:12.143 I/DrmUtils(26093): found android.hardware.drm@1.1::IDrmFactory widevine
+10-15 23:34:12.147 I/DrmUtils(26093): found android.hardware.drm@1.2::IDrmFactory clearkey
+10-15 23:34:12.148 I/DrmUtils(26093): found android.hardware.drm@1.2::IDrmFactory widevine
+10-15 23:34:12.151 I/DrmUtils(26093): found android.hardware.drm@1.3::IDrmFactory clearkey
+10-15 23:34:12.152 I/DrmUtils(26093): found android.hardware.drm@1.3::IDrmFactory widevine
+10-15 23:34:12.157 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.168 I/System.out(26093): false
+10-15 23:34:12.179 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.197 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.228 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.252 W/RecyclerView(26093): No adapter attached; skipping layout
+10-15 23:34:12.290 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.295 E/Surface (26093): freeAllBuffers: 1 buffers were freed while being dequeued!
+10-15 23:34:12.326 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.332 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:12.391 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.411 I/aone.productio(26093): Background young concurrent copying GC freed 305309(16MB) AllocSpace objects, 123(3496KB) LOS objects, 36% free, 30MB/48MB, paused 105us total 183.176ms
+10-15 23:34:12.433 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.537 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.583 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.964 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:12.982 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.004 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.004 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:34:13.005 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:34:13.005 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:34:13.005 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:34:13.028 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.047 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.053 I/aone.productio(26093): Background concurrent copying GC freed 409671(22MB) AllocSpace objects, 50(3304KB) LOS objects, 46% free, 27MB/51MB, paused 125us total 252.510ms
+10-15 23:34:13.077 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.097 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.111 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:34:13.111 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:34:13.111 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:34:13.111 E/libc    (26093): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:34:13.119 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.138 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.151 I/System.out(26093): false
+10-15 23:34:13.159 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.177 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory clearkey
+10-15 23:34:13.178 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory default
+10-15 23:34:13.179 I/DrmUtils(26093): found android.hardware.drm@1.0::IDrmFactory widevine
+10-15 23:34:13.181 I/DrmUtils(26093): found android.hardware.drm@1.1::IDrmFactory clearkey
+10-15 23:34:13.182 I/DrmUtils(26093): found android.hardware.drm@1.1::IDrmFactory widevine
+10-15 23:34:13.183 I/DrmUtils(26093): found android.hardware.drm@1.2::IDrmFactory clearkey
+10-15 23:34:13.184 I/DrmUtils(26093): found android.hardware.drm@1.2::IDrmFactory widevine
+10-15 23:34:13.185 I/DrmUtils(26093): found android.hardware.drm@1.3::IDrmFactory clearkey
+10-15 23:34:13.186 I/DrmUtils(26093): found android.hardware.drm@1.3::IDrmFactory widevine
+10-15 23:34:13.187 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.220 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.256 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.404 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.487 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:13.493 I/OMXClient(26093): IOmx service obtained
+10-15 23:34:13.494 I/OMXMaster( 3544): makeComponentInstance(OMX.Nvidia.h265.decode) in android.hardwar process
+10-15 23:34:13.500 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:13.503 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:13.564 I/MediaCodec(26093): mContentRefreshRate = 50.0
+10-15 23:34:13.564 D/MediaCodec(26093): flushMediametrics
+10-15 23:34:13.564 D/SurfaceUtils(26093): connecting to surface 0x3141ec85b0, reason connectToSurface
+10-15 23:34:13.565 I/MediaCodec(26093): [OMX.Nvidia.h265.decode] setting surface generation to 26719233
+10-15 23:34:13.565 D/SurfaceUtils(26093): disconnecting from surface 0x3141ec85b0, reason connectToSurface(reconnect)
+10-15 23:34:13.565 D/SurfaceUtils(26093): connecting to surface 0x3141ec85b0, reason connectToSurface(reconnect)
+10-15 23:34:13.566 E/OMXNodeInstance( 3544): getParameter(0x517c0320:Nvidia.h265.decode, ??(0x6f600011)) ERROR: NotImplemented(0x80001006)
+10-15 23:34:13.566 W/ACodec  (26093): Over-riding the width: 960 with max-width: 1920
+10-15 23:34:13.566 W/ACodec  (26093): Over-riding the height: 544 with max-height: 1080
+10-15 23:34:13.573 D/NvOsDebugPrintf( 3544): WARNING! HDRStatic info being set, even for non SMPTE 2084 case
+10-15 23:34:13.573 D/NvOsDebugPrintf( 3544): WARNING! This media may play as non HDR
+10-15 23:34:13.573 I/ACodec  (26093): Enable timestamp filtering for Video Decoder
+10-15 23:34:13.573 E/OMXNodeInstance( 3544): getConfig(0x517c0320:Nvidia.h265.decode, ConfigAndroidVendorExtension(0x6f100004)) ERROR: UnsupportedIndex(0x8000101a)
+10-15 23:34:13.574 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:13.574 I/ACodec  (26093): Scaled Width is 960, height is 544
+10-15 23:34:13.597 D/SurfaceUtils(26093): set up nativeWindow 0x3141ec85b0 for 960x544, color 0x106, rotation 0, usage 0x2900
+10-15 23:34:13.610 D/NvOsDebugPrintf( 3544): OPENMAX: HandleNewStreamFormat: 3609: Send OMX_EventPortSettingsChanged: nFrameWidth = 960, nFrameHeight = 540 
+10-15 23:34:13.611 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:13.611 I/ACodec  (26093): Scaled Width is 960, height is 540
+10-15 23:34:13.615 D/SurfaceUtils(26093): set up nativeWindow 0x3141ec85b0 for 960x540, color 0x18b, rotation 0, usage 0x2900
+10-15 23:34:13.631 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:13.631 I/ACodec  (26093): Scaled Width is 960, height is 540
+10-15 23:34:13.789 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:13.978 E/newrelic(26093): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:34:14.078 W/nvaudio_hw( 3359): stop_output_stream: 1 underruns seen on pcm device hdmi-playback
+10-15 23:34:14.119 I/OMXClient(26093): IOmx service obtained
+10-15 23:34:14.119 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:34:14.166 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:14.171 I/android_os_HwBinder(26093): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:34:14.173 I/MediaCodec(26093): MediaCodec will operate in async mode
+10-15 23:34:14.174 D/MediaCodec(26093): flushMediametrics
+10-15 23:34:14.178 E/OMXNodeInstance( 3544): getConfig(0x517c0400:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:34:14.178 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:34:14.179 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:34:14.183 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:34:14.187 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:34:14.191 E/HWComposer( 3435): setActiveColorMode: setColorMode(ColorMode::BT2100_PQ, RenderIntent::TONE_MAP_COLORIMETRIC) failed for display 0: Unsupported (8)
+10-15 23:34:14.273 D/AudioTrack(26093): getTimestamp_l(896): device stall time corrected using current time 1744292410642044
+10-15 23:34:14.490 E/memtrack(26093): Couldn't load memtrack module
+10-15 23:34:16.351 D/NvOsDebugPrintf( 3544): OPENMAX: HandleNewStreamFormat: 3609: Send OMX_EventPortSettingsChanged: nFrameWidth = 3840, nFrameHeight = 2176 
+10-15 23:34:16.377 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:16.377 I/ACodec  (26093): Scaled Width is 960, height is 540
+10-15 23:34:16.480 D/SurfaceUtils(26093): set up nativeWindow 0x3141ec85b0 for 3840x2176, color 0x18b, rotation 0, usage 0x2900
+10-15 23:34:16.708 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:16.708 I/ACodec  (26093): Scaled Width is 3840, height is 2160
+10-15 23:34:16.709 I/ACodec  (26093): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:34:16.710 I/ACodec  (26093): Scaled Width is 3840, height is 2160
+10-15 23:34:21.675 W/aone.productio(26093): Checksum mismatch for dex base.apk
+10-15 23:34:21.675 W/aone.productio(26093): Could not add methods to the existing profiler. Clearing the profile data.
