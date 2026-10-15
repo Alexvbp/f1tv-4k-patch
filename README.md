@@ -270,6 +270,7 @@ actually unlock 2160p are **HDR advertise** and **display-capability spoof**.
 |---|---|---|
 | `F1TV_HLG_BYPASS` | `1` | Advertise EGL HDR (PQ+HLG) so the backend offers the 2160p tier, and install the runtime HLG/PQ render-path patches. Required for 4K. |
 | `F1TV_DISPLAY_HDR_SPOOF` | `1` | Force the display-capability check to accept all HDR types so the core serves 2160p on HDR10-only panels. Required for 4K on the Shield. |
+| `F1TV_DEBUG_LOGS` | `0` | Set `1` to route the ClearVR player/core log (INFO level) to logcat; the stock app silences it. CI turns this on for every non-`main` branch, so **dev pre-releases log and `main` releases don't**. Pair with `scripts/capture_logs.sh`. |
 
 > **Result on an NVIDIA Shield + HDR10 TV:** true **3840×2160** with accurate colours, output as a
 > clean SDR downconvert (the Shield's GPU lacks the HLG EGL colorspace, so full HDR10 to the panel

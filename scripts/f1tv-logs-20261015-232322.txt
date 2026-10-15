@@ -1,0 +1,185 @@
+=== Device ===
+ro.product.manufacturer          NVIDIA
+ro.product.model                 SHIELD Android TV
+ro.product.device                mdarcy
+ro.board.platform                tegra
+ro.build.version.release         11
+ro.build.version.sdk             30
+ro.product.cpu.abilist           arm64-v8a,armeabi-v7a,armeabi
+
+=== F1TV package ===
+primaryCpuAbi=arm64-v8a
+versionName=3.0.49.4-SP166.4.1-release-R54.2-tv-UHD
+splits=[base, config.arm64_v8a, config.en, config.xhdpi]
+
+=== Display / HDR ===
+DisplayDeviceInfo{"Built-in Screen": uniqueId="local:0", 3840 x 2160, modeId 21, defaultModeId 21, supportedModes [{id=1, width=3840, height=2160, fps=29.97003
+HdrCapabilities{mSupportedHdrTypes=[2], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}
+
+=== EGL extensions (BT2020 colorspaces decide the HDR render path) ===
+EGL_EXT_gl_colorspace_bt2020_linear
+EGL_EXT_gl_colorspace_bt2020_pq
+EGL_EXT_gl_colorspace_display_p3
+EGL_EXT_gl_colorspace_display_p3_linear
+EGL_EXT_gl_colorspace_scrgb
+EGL_EXT_gl_colorspace_scrgb_linear
+
+=== Decoders (HEVC video, AC-3 / E-AC3 audio) ===
+Decoder "OMX.Nvidia.DOVI.decode.secure" supports
+Media type 'video/hevc':
+Decoder "OMX.Nvidia.h265.decode.secure" supports
+Decoder "OMX.google.hevc.decoder" supports
+Decoder "OMX.google.vp9.decoder" supports
+Media type 'video/hevc':
+
+=== Audio output (surround / passthrough encodings) ===
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 3, 40000000 (default): 15
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 4, 40000000 (default): 15
+Current: 2 (speaker): 5, 4 (headset): 4, 8 (headphone): 4, 80 (bt_a2dp): 4, 400 (hdmi): 5, 1000 (digital_dock): 4, 4000000 (usb_headset): 2, 40000000 (default): 5
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 1, 40000000 (default): 7
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 2, 40000000 (default): 7
+Current: 400 (hdmi): 7, 40000000 (default): 7
+[DeviceInfo: type:0x400 (hdmi) name: addr:aux1_audio codec: 0]
+Devices: hdmi
+mHdmiAudioSystemClient=null
+mHdmiCecSink=true
+mHdmiCecVolumeControlEnabled=false
+mHdmiPlaybackClient=android.hardware.hdmi.HdmiPlaybackClient@ea9796d
+mHdmiSystemAudioSupported=false
+mHdmiTvClient=null
+
+Waiting for com.formulaone.production to run (open F1TV on the TV)...
+F1TV pid 22714. Now play the stream; recording for 180s max (Ctrl+C to stop early)...
+=== Logcat ===
+10-15 23:23:29.844 I/newrelic(22714): Connecting, saved state is not available: DataToken{accountId=0, agentId=0}
+10-15 23:23:29.857 E/newrelic(22714): Failed to retrieve collector response: Failed to connect to mobile-collector.newrelic.com/0.0.0.0:443
+10-15 23:23:29.857 E/newrelic(22714): HarvestConnection: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:29.858 E/newrelic(22714): An unknown error occurred when connecting to the Collector.
+10-15 23:23:29.877 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:29.885 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:29.885 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:29.885 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:29.885 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:29.895 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:29.961 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:30.888 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:30.888 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:30.888 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:30.888 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:30.890 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:30.891 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:30.891 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:30.891 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:30.893 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:30.893 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:30.893 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:30.893 E/newrelic(22714): Failed to add MobileRequestError
+10-15 23:23:30.895 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:30.895 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:30.895 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:30.895 E/newrelic(22714): Failed to add MobileRequestError
+10-15 23:23:30.896 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:30.897 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:30.897 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:30.898 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:31.872 D/AudioTrack(22714): stop(893): called with 827392 frames delivered
+10-15 23:23:31.875 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:23:31.875 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:23:31.878 D/MediaCodec(22714): flushMediametrics
+10-15 23:23:31.878 D/MediaCodec(22714): flushMediametrics
+10-15 23:23:31.884 D/ACodec  (22714): REUSING read fence 124 as write fence in submitRegularOutputBuffers
+10-15 23:23:31.986 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:32.050 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:32.053 I/OMXClient(22714): IOmx service obtained
+10-15 23:23:32.054 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:23:32.059 I/android_os_HwBinder(22714): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:23:32.070 I/android_os_HwBinder(22714): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:23:32.073 I/MediaCodec(22714): MediaCodec will operate in async mode
+10-15 23:23:32.073 D/MediaCodec(22714): flushMediametrics
+10-15 23:23:32.075 E/OMXNodeInstance( 3544): getConfig(0x517c13c0:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:23:32.075 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:23:32.076 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:23:32.086 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:23:32.091 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:23:32.134 D/AudioTrack(22714): getTimestamp_l(894): device stall time corrected using current time 1743650271266612
+10-15 23:23:32.140 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:32.210 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:32.232 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:23:32.902 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.902 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.902 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.902 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:32.903 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.903 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.903 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.903 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:32.905 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.905 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.905 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.905 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:32.906 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.906 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.906 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.906 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:32.907 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.907 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.907 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.907 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:32.908 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.908 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.908 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.909 E/newrelic(22714): Failed to add MobileRequestError
+10-15 23:23:32.910 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:23:32.910 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:23:32.910 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:23:32.910 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:23:33.626 I/aone.productio(22714): Background concurrent copying GC freed 99640(5351KB) AllocSpace objects, 479(19MB) LOS objects, 40% free, 35MB/59MB, paused 205us total 260.314ms
+10-15 23:23:54.219 I/aone.productio(22714): Background concurrent copying GC freed 78381(4847KB) AllocSpace objects, 450(19MB) LOS objects, 40% free, 35MB/59MB, paused 75us total 257.114ms
+10-15 23:24:03.644 D/AudioTrack(22714): stop(894): called with 1513472 frames delivered
+10-15 23:24:03.650 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:24:03.652 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:24:03.657 D/MediaCodec(22714): flushMediametrics
+10-15 23:24:03.658 D/MediaCodec(22714): flushMediametrics
+10-15 23:24:03.660 I/OMXClient(22714): IOmx service obtained
+10-15 23:24:03.661 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:24:03.667 I/android_os_HwBinder(22714): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:24:03.676 I/android_os_HwBinder(22714): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:24:03.687 I/MediaCodec(22714): MediaCodec will operate in async mode
+10-15 23:24:03.687 D/MediaCodec(22714): flushMediametrics
+10-15 23:24:03.689 E/OMXNodeInstance( 3544): getConfig(0x517c13c0:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:24:03.689 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:24:03.689 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:24:03.695 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:24:03.698 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:24:03.720 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:24:03.755 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:24:03.864 E/newrelic(22714): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:24:03.923 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.923 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.924 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.924 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.937 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.937 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.937 W/newrelic(22714): Event [androidAPILoaded] evicted from queue
+10-15 23:24:03.937 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.939 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.939 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.939 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.939 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.941 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.941 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.941 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.941 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.943 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.943 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.943 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.943 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.945 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.945 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.945 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.945 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:03.948 W/newrelic(22714): Event queue time [60] exceeded
+10-15 23:24:03.948 W/newrelic(22714): Event queue overflow adding event [null]
+10-15 23:24:03.948 W/newrelic(22714): Event [null] evicted from queue
+10-15 23:24:03.948 W/newrelic(22714): Event queue size [1000] exceeded max[1000]
+10-15 23:24:04.041 I/aone.productio(22714): Background young concurrent copying GC freed 96547(6814KB) AllocSpace objects, 270(16MB) LOS objects, 38% free, 36MB/59MB, paused 111us total 116.413ms

@@ -1,0 +1,35 @@
+=== Device ===
+ro.product.manufacturer          NVIDIA
+ro.product.model                 SHIELD Android TV
+ro.product.device                mdarcy
+ro.board.platform                tegra
+ro.build.version.release         11
+ro.build.version.sdk             30
+ro.product.cpu.abilist           arm64-v8a,armeabi-v7a,armeabi
+
+=== F1TV package ===
+primaryCpuAbi=arm64-v8a
+versionName=3.0.49.4-SP166.4.1-release-R54.2-tv-UHD
+splits=[base, config.arm64_v8a, config.en, config.xhdpi]
+
+=== Display / HDR ===
+DisplayDeviceInfo{"Built-in Screen": uniqueId="local:0", 3840 x 2160, modeId 21, defaultModeId 21, supportedModes [{id=1, width=3840, height=2160, fps=29.97003
+HdrCapabilities{mSupportedHdrTypes=[2], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}
+
+=== EGL extensions (BT2020 colorspaces decide the HDR render path) ===
+EGL_EXT_gl_colorspace_bt2020_linear
+EGL_EXT_gl_colorspace_bt2020_pq
+EGL_EXT_gl_colorspace_display_p3
+EGL_EXT_gl_colorspace_display_p3_linear
+EGL_EXT_gl_colorspace_scrgb
+EGL_EXT_gl_colorspace_scrgb_linear
+
+=== HEVC decoders ===
+Media type 'video/hevc':
+  Decoder "OMX.google.hevc.decoder" supports
+Media type 'video/hevc':
+
+=== Logcat (120s max, Ctrl+C to stop early) ===
+10-15 23:15:29.866 I/chatty  (22714): uid=10193(com.formulaone.production) Firebase Blocki identical 4 lines
+10-15 23:16:29.873 I/chatty  (22714): uid=10193(com.formulaone.production) Firebase Blocki identical 4 lines
+10-15 23:16:32.673 I/chatty  (22714): uid=10193(com.formulaone.production) Firebase Blocki identical 1 line

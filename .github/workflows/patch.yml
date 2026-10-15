@@ -419,6 +419,9 @@ jobs:
           # README "Applied patches" table.
           F1TV_HLG_BYPASS: "1"
           F1TV_DISPLAY_HDR_SPOOF: "1"
+          # Non-main (dev) builds route the ClearVR player log to logcat so
+          # scripts/capture_logs.sh shows what the player decided.
+          F1TV_DEBUG_LOGS: ${{ github.ref_name != 'main' && '1' || '0' }}
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH || '' }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS || 'android' }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS || 'f1tvpatch' }}

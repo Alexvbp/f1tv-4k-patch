@@ -764,6 +764,54 @@ PYEOF
     fi
 fi
 
+# ─── Opt-in: ClearVR player logs to logcat (F1TV_DEBUG_LOGS=1, dev builds) ──
+#
+# The F1TV app calls TiledmediaPlayer.setLogConfig(LogConfig.getDisabledConfig()),
+# which sets every ClearVR log level to ERROR and routes nothing to the console,
+# so logcat never shows what the player/core decided (audio tracks skipped,
+# render path chosen, decoder reconfigures, TM40xx causes). For test builds,
+# rewrite getDisabledConfig() into an INFO-level console config so
+# scripts/capture_logs.sh actually captures the player. Off by default.
+
+if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
+    info "Enabling ClearVR player logs (F1TV_DEBUG_LOGS=1)..."
+    LOGCFG_SMALI="$(find "${DECOMPILED}" -name 'LogConfig.smali' -path '*/tiledmedia/clearvrplayer/*' -print -quit)"
+    [[ -n "${LOGCFG_SMALI}" ]] || die "LogConfig.smali not found"
+    if ! python3 - "${LOGCFG_SMALI}" << 'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+pat = r'(\.method public static getDisabledConfig\(\)Lcom/tiledmedia/clearvrplayer/LogConfig;)(.*?)(\.end method)'
+m = re.search(pat, content, flags=re.DOTALL)
+if not m:
+    print("ERROR: getDisabledConfig not found", file=sys.stderr); sys.exit(1)
+body = m.group(2)
+n_lvl = body.count('Lcom/tiledmedia/clearvrenums/LogLevel;->ERROR:')
+n_bool = body.count('Ljava/lang/Boolean;->FALSE:')
+if n_lvl != 1 or n_bool != 1 or 'return-object v0' not in body:
+    print(f"ERROR: getDisabledConfig shape unexpected (ERROR={n_lvl}, FALSE={n_bool})", file=sys.stderr); sys.exit(1)
+body = body.replace('Lcom/tiledmedia/clearvrenums/LogLevel;->ERROR:', 'Lcom/tiledmedia/clearvrenums/LogLevel;->INFO:', 1)
+body = body.replace('Ljava/lang/Boolean;->FALSE:', 'Ljava/lang/Boolean;->TRUE:', 1)
+body = body.replace('    return-object v0', """    # UHD Patch (debug logs): INFO level, log to console/logcat
+    const/4 v1, 0x1
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setLogToConsole(Z)V
+
+    return-object v0""", 1)
+content = content[:m.start(2)] + body + content[m.end(2):]
+with open(path, 'w') as f:
+    f.write(content)
+print("getDisabledConfig -> INFO level, stderr/console on")
+PYEOF
+    then
+        die "Debug logs patch failed"
+    fi
+    ok "ClearVR player logs enabled (INFO -> logcat)"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
@@ -833,6 +881,9 @@ if [[ "${F1TV_DISPLAY_HDR_SPOOF:-1}" != "0" ]]; then
     if f="$(find "${DECOMPILED}" -name 'DeviceParameters.smali' -path '*/tiledmedia/*' -print -quit)"; then
         if awk '/doesDisplaySupport\(Landroid\/content\/Context;I\)Z/,/\.end method/' "${f}" | grep 'const/4 v0, 0x1' >/dev/null; then ok "  display HDR spoof"; else warn "  NOT APPLIED: display HDR spoof"; VERIFY_FAILED=1; fi
     fi
+fi
+if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
+    verify_marker 'LogConfig.smali' '*/tiledmedia/clearvrplayer/*' 'UHD Patch \(debug logs\)' 'ClearVR player logs enabled'
 fi
 # The removed model spoof must stay removed: Build.MODEL must still be read in getRequestHeader.
 if f="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"; then
