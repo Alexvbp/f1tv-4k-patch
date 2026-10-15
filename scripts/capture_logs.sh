@@ -72,5 +72,14 @@ timeout "${DURATION}" adb logcat -v time 2>/dev/null \
     | grep -vE --line-buffered 'chatty|Firebase|Glide|OkHttp|Choreographer' \
     | tee -a "${OUT}" || true
 
+# Debug (-UHD-dbg) builds make the native ClearVR core write its own log to the
+# app's external files dir. Pull it too: it holds the audio-track / ABR / tier
+# decisions that never reach logcat.
+CORE_LOG="/sdcard/Android/data/${PACKAGE}/files/clearvr.tmlog"
+if adb shell "test -f ${CORE_LOG}" 2>/dev/null; then
+    CORE_OUT="${OUT%.txt}-core.tmlog"
+    adb pull "${CORE_LOG}" "${CORE_OUT}" >/dev/null 2>&1 && echo "Core log:  ${CORE_OUT}  — attach this one as well."
+fi
+
 echo
 echo "Saved: ${OUT}  — attach this file to the GitHub issue."

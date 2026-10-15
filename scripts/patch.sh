@@ -764,6 +764,89 @@ PYEOF
     fi
 fi
 
+# ─── Decoder max-resolution hint (default ON) ────────────────────────────────
+#
+# ClearVR configures the video decoder at the FIRST tile size it receives
+# (e.g. 960x544) with no max size, and relies on the decoder reallocating when
+# the stream ramps to 3840x2176 (seen on the Shield: "Over-riding the width:
+# 960 with max-width: 1920", then an OMX port reconfigure to 3840x2176).
+# Tegra copes. MediaTek decoders must re-acquire a 4K secure decoder instance
+# mid-stream and fail: "acquireVdecResource: resource: [3840, 2176, ...] not
+# enough, recliam and waitresource" -> TM4014 / flicker (issues #5, #11, #17).
+# The standard adaptive-playback fix is to tell MediaCodec up front how large
+# the stream can get (KEY_MAX_WIDTH / KEY_MAX_HEIGHT, what ExoPlayer does), so
+# the decoder reserves resources for its largest supported resolution once.
+# Set F1TV_DECODER_MAX_RES=0 to disable.
+
+if [[ "${F1TV_DECODER_MAX_RES:-1}" != "0" ]]; then
+    info "Adding decoder max-width/max-height hint (adaptive playback)..."
+    VDB_SMALI="$(find "${DECOMPILED}" -name 'VideoDecoderBridgeShared.smali' -path '*/tiledmedia/clearvrdecoder/*' -print -quit)"
+    [[ -n "${VDB_SMALI}" ]] || die "VideoDecoderBridgeShared.smali not found"
+    if ! python3 - "${VDB_SMALI}" << 'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+# Inside getMediaFormat(Configuration, Resolution, int): right after
+#     const-string v1, "height"
+#     invoke-virtual {v0, v1, p1}, MediaFormat.setInteger
+# v1/v2 are scratch locals and p1 is dead (reassigned on the next line).
+pat = re.compile(
+    r'(\.method private static getMediaFormat\(Lcom/tiledmedia/clearvrdecoder/video/VideoDecoderBridgeShared\$Configuration;Lcom/tiledmedia/clearvrdecoder/util/Resolution;I\)Landroid/media/MediaFormat;'
+    r'.*?const-string v1, "height"\n\n'
+    r'    invoke-virtual \{v0, v1, p1\}, Landroid/media/MediaFormat;->setInteger\(Ljava/lang/String;I\)V\n)',
+    re.DOTALL)
+m = pat.search(content)
+if not m:
+    print("ERROR: getMediaFormat height anchor not found", file=sys.stderr); sys.exit(1)
+
+hint = """
+    # UHD Patch: adaptive-playback hint -- reserve decoder resources for the
+    # largest resolution this decoder supports, so the ramp to 2160p needs no
+    # mid-stream reallocation (MediaTek: acquireVdecResource not enough).
+    iget-object v1, p0, Lcom/tiledmedia/clearvrdecoder/video/VideoDecoderBridgeShared$Configuration;->decoderCapabilities:Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;
+
+    if-eqz v1, :uhd_maxres_skip
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;->getMaxSupportedAndValidResolution()Lcom/tiledmedia/clearvrdecoder/util/Resolution;
+
+    move-result-object v1
+
+    if-eqz v1, :uhd_maxres_skip
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/Resolution;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :uhd_maxres_skip
+
+    const-string p1, "max-width"
+
+    invoke-virtual {v0, p1, v2}, Landroid/media/MediaFormat;->setInteger(Ljava/lang/String;I)V
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/Resolution;->getHeight()I
+
+    move-result v2
+
+    const-string p1, "max-height"
+
+    invoke-virtual {v0, p1, v2}, Landroid/media/MediaFormat;->setInteger(Ljava/lang/String;I)V
+
+    :uhd_maxres_skip
+"""
+content = content[:m.end()] + hint + content[m.end():]
+with open(path, 'w') as f:
+    f.write(content)
+print("getMediaFormat -> max-width/max-height = decoder's largest supported resolution")
+PYEOF
+    then
+        die "Decoder max-resolution hint patch failed"
+    fi
+    ok "Decoder max-resolution hint applied"
+fi
+
 # ─── Opt-in: ClearVR player logs to logcat (F1TV_DEBUG_LOGS=1, dev builds) ──
 #
 # The F1TV app calls TiledmediaPlayer.setLogConfig(LogConfig.getDisabledConfig()),
@@ -811,11 +894,39 @@ m2 = re.search(pat2, content, flags=re.DOTALL)
 if not m2 or m2.group(2).count('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:') != 1:
     print("ERROR: getWarningConfig shape unexpected", file=sys.stderr); sys.exit(1)
 body2 = m2.group(2).replace('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:', 'Lcom/tiledmedia/clearvrenums/LogLevel;->INFO:', 1)
+# The native core writes its log to a file, not to logcat. Point it at the
+# app's external files dir (readable with `adb pull`, no root needed) so
+# capture_logs.sh can collect it.
+new_file = """    # UHD Patch (debug logs): core log file in the app's external files dir
+    const-string v1, "/sdcard/Android/data/com.formulaone.production/files"
+
+    new-instance v2, Ljava/io/File;
+
+    invoke-direct {v2, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v2}, Ljava/io/File;->mkdirs()Z
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFolder(Ljava/lang/String;)V
+
+    const-string v1, "clearvr.tmlog"
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFileName(Ljava/lang/String;)V
+
+    const-string v1, ""
+"""
+# apktool emits ".line N" markers between these statements; tolerate them.
+pat_file = re.compile(
+    r'    const-string v1, ""\n\n'
+    r'(?:    \.line \d+\n)?    invoke-virtual \{v0, v1\}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFileName\(Ljava/lang/String;\)V\n\n'
+    r'(?:    \.line \d+\n)?    invoke-virtual \{v0, v1\}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFolder\(Ljava/lang/String;\)V\n')
+body2, k = pat_file.subn(lambda _m: new_file, body2, count=1)
+if k != 1:
+    print("ERROR: getWarningConfig file/folder lines not found", file=sys.stderr); sys.exit(1)
 content = content[:m2.start(2)] + body2 + content[m2.end(2):]
 
 with open(path, 'w') as f:
     f.write(content)
-print("getDisabledConfig -> INFO + console; getWarningConfig (default) -> INFO")
+print("getDisabledConfig -> INFO + console; getWarningConfig (default) -> INFO + core log file")
 PYEOF
     then
         die "Debug logs patch failed"
@@ -938,6 +1049,9 @@ if [[ "${F1TV_DISPLAY_HDR_SPOOF:-1}" != "0" ]]; then
     if f="$(find "${DECOMPILED}" -name 'DeviceParameters.smali' -path '*/tiledmedia/*' -print -quit)"; then
         if awk '/doesDisplaySupport\(Landroid\/content\/Context;I\)Z/,/\.end method/' "${f}" | grep 'const/4 v0, 0x1' >/dev/null; then ok "  display HDR spoof"; else warn "  NOT APPLIED: display HDR spoof"; VERIFY_FAILED=1; fi
     fi
+fi
+if [[ "${F1TV_DECODER_MAX_RES:-1}" != "0" ]]; then
+    verify_marker 'VideoDecoderBridgeShared.smali' '*/tiledmedia/clearvrdecoder/*' 'const-string p1, "max-width"' 'decoder max-resolution hint'
 fi
 if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
     verify_marker 'LogConfig.smali' '*/tiledmedia/clearvrplayer/*' 'UHD Patch \(debug logs\)' 'ClearVR player logs enabled'

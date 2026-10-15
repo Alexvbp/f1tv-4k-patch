@@ -1,0 +1,639 @@
+=== Device ===
+ro.product.manufacturer          NVIDIA
+ro.product.model                 SHIELD Android TV
+ro.product.device                mdarcy
+ro.board.platform                tegra
+ro.build.version.release         11
+ro.build.version.sdk             30
+ro.product.cpu.abilist           arm64-v8a,armeabi-v7a,armeabi
+
+=== F1TV package ===
+primaryCpuAbi=arm64-v8a
+versionName=3.0.49.4-SP166.4.1-release-R54.2-tv-UHD-dbg
+splits=[base, config.arm64_v8a, config.en, config.xhdpi]
+
+=== Display / HDR ===
+DisplayDeviceInfo{"Built-in Screen": uniqueId="local:0", 3840 x 2160, modeId 21, defaultModeId 21, supportedModes [{id=1, width=3840, height=2160, fps=29.97003
+HdrCapabilities{mSupportedHdrTypes=[2], mMaxLuminance=500.0, mMaxAverageLuminance=500.0, mMinLuminance=0.0}
+
+=== EGL extensions (BT2020 colorspaces decide the HDR render path) ===
+EGL_EXT_gl_colorspace_bt2020_linear
+EGL_EXT_gl_colorspace_bt2020_pq
+EGL_EXT_gl_colorspace_display_p3
+EGL_EXT_gl_colorspace_display_p3_linear
+EGL_EXT_gl_colorspace_scrgb
+EGL_EXT_gl_colorspace_scrgb_linear
+
+=== Decoders (HEVC video, AC-3 / E-AC3 audio) ===
+Decoder "OMX.Nvidia.DOVI.decode.secure" supports
+Media type 'video/hevc':
+Decoder "OMX.Nvidia.h265.decode.secure" supports
+Decoder "OMX.google.hevc.decoder" supports
+Decoder "OMX.google.vp9.decoder" supports
+Media type 'video/hevc':
+
+=== Audio output (surround / passthrough encodings) ===
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 3, 40000000 (default): 15
+Current: 2 (speaker): 15, 4 (headset): 10, 8 (headphone): 10, 80 (bt_a2dp): 10, 400 (hdmi): 15, 1000 (digital_dock): 10, 4000000 (usb_headset): 4, 40000000 (default): 15
+Current: 2 (speaker): 5, 4 (headset): 4, 8 (headphone): 4, 80 (bt_a2dp): 4, 400 (hdmi): 5, 1000 (digital_dock): 4, 4000000 (usb_headset): 2, 40000000 (default): 5
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 1, 40000000 (default): 7
+Current: 2 (speaker): 7, 4 (headset): 5, 8 (headphone): 5, 80 (bt_a2dp): 5, 400 (hdmi): 7, 1000 (digital_dock): 5, 4000000 (usb_headset): 2, 40000000 (default): 7
+Current: 400 (hdmi): 7, 40000000 (default): 7
+[DeviceInfo: type:0x400 (hdmi) name: addr:aux1_audio codec: 0]
+Devices: hdmi
+mHdmiAudioSystemClient=null
+mHdmiCecSink=true
+mHdmiCecVolumeControlEnabled=false
+mHdmiPlaybackClient=android.hardware.hdmi.HdmiPlaybackClient@ea9796d
+mHdmiSystemAudioSupported=false
+mHdmiTvClient=null
+
+Waiting for com.formulaone.production to run (open F1TV on the TV)...
+F1TV pid 27809. Now play the stream; recording for 180s max (Ctrl+C to stop early)...
+=== Logcat ===
+10-15 23:44:57.106 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.195 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.204 W/View    (27809): requestLayout() improperly called by com.avs.f1.ui.widget.ColumnConstraintLayout{dc8e914 VFE...... .F....ID 40,0-1784,732 #7f0b0635 app:id/top_layout} during layout: running second layout pass
+10-15 23:44:57.228 W/View    (27809): requestLayout() improperly called by com.avs.f1.ui.widget.PlayResumeBar{e5006b4 V.ED..... ......I. 0,0-0,0 #7f0b0482 app:id/play_head} during layout: running second layout pass
+10-15 23:44:57.240 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.272 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.314 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.354 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.383 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.437 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.465 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.490 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.531 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.561 I/aone.productio(27809): Background concurrent copying GC freed 264290(16MB) AllocSpace objects, 52(1088KB) LOS objects, 50% free, 16MB/32MB, paused 67us total 192.126ms
+10-15 23:44:57.564 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.598 D/AppCompatDelegate(27809): Checking for metadata for AppLocalesMetadataHolderService : Service not found
+10-15 23:44:57.611 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.656 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.672 I/ClearVR (27809): TiledmediaPlayer - Subtitle styling preferences should be received with default values from the core, manually settings default values
+10-15 23:44:57.694 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.703 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:57.705 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:57.726 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.744 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:44:57.744 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:44:57.744 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:44:57.744 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:44:57.753 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.777 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.779 I/ClearVR (27809): SubtitleStylingPreferences (19535077) - Call core static success
+10-15 23:44:57.780 I/ClearVR (27809): SubtitleStylingPreferences (19535077) - Call core static success
+10-15 23:44:57.814 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.855 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.881 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.889 I/ClearVR (27809): TMSurfaceView (143384546) - TMSurfaceView (143384546) created.
+10-15 23:44:57.907 I/ClearVR (27809): ViewModelManager - Registered ViewModel View id: 1, DOIDs: [1], isViewVisible: NOT_VISIBLE, ViewRendererConfig: ViewRenderMode: UNSET, ViewReconfigureReason: RECONFIGURING, ProjectionType: UNKNOWN, MeshTextureMode: Unknown, NRPTextureBlitMode: UNKNOWN, isSecureTextureRequired: false, videoRange: VideoRangeSDR, bitDepth: 8, attachedToWindow: false, Dimensions: 639x383. Source: PLACEHOLDER (active video quality: none), desiredVideoSelectionCount: 0, name: 'View for DOIDs: [1]', Render Thread Mode: Auto Detect. State: State: 'RegisterPending', Payload: null. RenderMode: UNSET, Has cachedSurfaceTextureAvailableAction: false, SurfaceTexture instance counter: -1. clearVRViewActions size: 0, grid (r/c): 1/1.
+10-15 23:44:57.910 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:57.915 I/ClearVR (27809): TiledmediaView (1) - TiledmediaView created. TiledmediaView class: 'com.tiledmedia.clearvrview.TiledmediaView', type: SURFACE_VIEW, secure view requested: true (SUPPORTED), support L1 secured Indirect surface: SUPPORTED, target surface: NOT SECURED, aspect ratio layout: Resize mode: RESIZE_MODE_FIT, video aspect ratio: null, rounded corner radius percentage: 0.000%, model: View id: 1, DOIDs: [1], isViewVisible: NOT_VISIBLE, ViewRendererConfig: ViewRenderMode: UNSET, ViewReconfigureReason: RECONFIGURING, ProjectionType: UNKNOWN, MeshTextureMode: Unknown, NRPTextureBlitMode: UNKNOWN, isSecureTextureRequired: false, videoRange: VideoRangeSDR, bitDepth: 8, attachedToWindow: false, Dimensions: 639x383. Source: PLACEHOLDER (active video quality: none), desiredVideoSelectionCount: 0, name: 'View for DOIDs: [1]', Render Thread Mode: Auto Detect. State: State: 'Registered', Payload: null. RenderMode: UNSET, Has cachedSurfaceTextureAvailableAction: false, SurfaceTexture instance counter: -1. clearVRViewActions size: 0, grid (r/c): 1/1.
+10-15 23:44:57.929 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:57.932 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.046 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.059 I/ClearVR (27809): ChromeCastSessionManager (109504289) - Assigning TiledmediaPlayer. Config is null
+10-15 23:44:58.066 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 243680767
+10-15 23:44:58.066 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.067 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 179941324
+10-15 23:44:58.067 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 141046293
+10-15 23:44:58.068 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 213787
+10-15 23:44:58.071 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 223186637
+10-15 23:44:58.077 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding TiledmediaPlayer event listener with hash: 249229530
+10-15 23:44:58.087 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.104 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.118 D/vulkan  (27809): searching for layers in '/data/app/~~QDYTLvpZIdpM3IaJXHZ3bg==/com.formulaone.production-mSVJYuzL47OGRXigz9I3xQ==/lib/arm64'
+10-15 23:44:58.119 D/vulkan  (27809): searching for layers in '/data/app/~~QDYTLvpZIdpM3IaJXHZ3bg==/com.formulaone.production-mSVJYuzL47OGRXigz9I3xQ==/base.apk!/lib/arm64-v8a'
+10-15 23:44:58.119 D/vulkan  (27809): searching for layers in '/data/app/~~QDYTLvpZIdpM3IaJXHZ3bg==/com.formulaone.production-mSVJYuzL47OGRXigz9I3xQ==/split_config.arm64_v8a.apk!/lib/arm64-v8a'
+10-15 23:44:58.119 D/vulkan  (27809): searching for layers in '/data/app/~~QDYTLvpZIdpM3IaJXHZ3bg==/com.formulaone.production-mSVJYuzL47OGRXigz9I3xQ==/split_config.en.apk!/lib/arm64-v8a'
+10-15 23:44:58.120 D/vulkan  (27809): searching for layers in '/data/app/~~QDYTLvpZIdpM3IaJXHZ3bg==/com.formulaone.production-mSVJYuzL47OGRXigz9I3xQ==/split_config.xhdpi.apk!/lib/arm64-v8a'
+10-15 23:44:58.130 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.131 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:44:58.131 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:44:58.131 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:44:58.131 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:44:58.162 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.170 W/Gralloc4(27809): allocator 3.x is not supported
+10-15 23:44:58.172 W/Gralloc3(27809): allocator 3.x is not supported
+10-15 23:44:58.193 I/ClearVR (27809): CodecCaps - Querying decoder capabilities of supported codecs...
+10-15 23:44:58.193 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.199 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMainStill (id: 4), media container video profile: 4, core video codec profile: H265_MAIN_STILL' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.203 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10HDR10Plus (id: 8192), media container video profile: 6, core video codec profile: H265_MAIN10_HDR10_PLUS' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.209 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMainStill (id: 4), media container video profile: 4, core video codec profile: H265_MAIN_STILL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.212 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10HDR10Plus (id: 8192), media container video profile: 6, core video codec profile: H265_MAIN10_HDR10_PLUS' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.216 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.218 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMainStill (id: 4), media container video profile: 4, core video codec profile: H265_MAIN_STILL' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.223 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10HDR10Plus (id: 8192), media container video profile: 6, core video codec profile: H265_MAIN10_HDR10_PLUS' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.224 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain (id: 1), media container video profile: 1, core video codec profile: H265_MAIN' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.224 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10 (id: 2), media container video profile: 2, core video codec profile: H265_MAIN10' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.225 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMainStill (id: 4), media container video profile: 4, core video codec profile: H265_MAIN_STILL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.225 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10HDR10 (id: 4096), media container video profile: 5, core video codec profile: H265_MAIN10_HDR10' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.225 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/hevc', profile: 'name: HEVCProfileMain10HDR10Plus (id: 8192), media container video profile: 6, core video codec profile: H265_MAIN10_HDR10_PLUS' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.231 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileExtended (id: 4), media container video profile: 12, core video codec profile: H264_EXTENDED_PROFILE' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.234 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh10 (id: 16), media container video profile: 15, core video codec profile: H264_HIGH10' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.235 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh422 (id: 32), media container video profile: 0, core video codec profile: H264_HIGH422' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.236 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh444 (id: 64), media container video profile: 0, core video codec profile: H264_HIGH444' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.243 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.246 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileExtended (id: 4), media container video profile: 12, core video codec profile: H264_EXTENDED_PROFILE' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.250 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh10 (id: 16), media container video profile: 15, core video codec profile: H264_HIGH10' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.251 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh422 (id: 32), media container video profile: 0, core video codec profile: H264_HIGH422' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.252 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh444 (id: 64), media container video profile: 0, core video codec profile: H264_HIGH444' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.259 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileExtended (id: 4), media container video profile: 12, core video codec profile: H264_EXTENDED_PROFILE' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.260 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.262 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh10 (id: 16), media container video profile: 15, core video codec profile: H264_HIGH10' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.263 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh422 (id: 32), media container video profile: 0, core video codec profile: H264_HIGH422' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.263 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh444 (id: 64), media container video profile: 0, core video codec profile: H264_HIGH444' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.266 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileBaseline (id: 1), media container video profile: 11, core video codec profile: H264_BASELINE' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.267 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileMain (id: 2), media container video profile: 13, core video codec profile: H264_MAIN' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.267 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileExtended (id: 4), media container video profile: 12, core video codec profile: H264_EXTENDED_PROFILE' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.267 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh (id: 8), media container video profile: 14, core video codec profile: H264_HIGH' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.268 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh10 (id: 16), media container video profile: 15, core video codec profile: H264_HIGH10' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.268 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh422 (id: 32), media container video profile: 0, core video codec profile: H264_HIGH422' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.268 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileHigh444 (id: 64), media container video profile: 0, core video codec profile: H264_HIGH444' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.269 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileConstrainedBaseline (id: 65536), media container video profile: 0, core video codec profile: H264_CONSTRAINED_BASELINE' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.269 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/avc', profile: 'name: AVCProfileConstrainedHigh (id: 524288), media container video profile: 0, core video codec profile: H264_CONSTRAINED_HIGH' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.269 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain8 (id: 1), media container video profile: 20, core video codec profile: AV1_MAIN' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.269 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10 (id: 2), media container video profile: 21, core video codec profile: AV1_HIGH' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.270 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10 (id: 4096), media container video profile: 22, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.270 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10Plus (id: 8192), media container video profile: 0, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE]
+10-15 23:44:58.270 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain8 (id: 1), media container video profile: 20, core video codec profile: AV1_MAIN' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.270 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10 (id: 2), media container video profile: 21, core video codec profile: AV1_HIGH' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.270 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10 (id: 4096), media container video profile: 22, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10Plus (id: 8192), media container video profile: 0, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain8 (id: 1), media container video profile: 20, core video codec profile: AV1_MAIN' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10 (id: 2), media container video profile: 21, core video codec profile: AV1_HIGH' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10 (id: 4096), media container video profile: 22, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10Plus (id: 8192), media container video profile: 0, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:58.271 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain8 (id: 1), media container video profile: 20, core video codec profile: AV1_MAIN' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.272 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10 (id: 2), media container video profile: 21, core video codec profile: AV1_HIGH' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.272 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10 (id: 4096), media container video profile: 22, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.272 I/ClearVR (27809): CodecCaps - Codec not supported by device: mimetype: 'video/av01', profile: 'name: AV1ProfileMain10HDR10Plus (id: 8192), media container video profile: 0, core video codec profile: AV1_PROFESSIONAL' and decoder flags: [FLAG_HARDWARE, FLAG_SECURE, FLAG_LOW_LATENCY]
+10-15 23:44:58.272 I/ClearVR (27809): CodecCaps - Querying decoder capabilities of supported codecs... success!
+10-15 23:44:58.280 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.283 I/ClearVR (27809): DRMSessionBridge - Querying widevine support (attempt 0, timeout 1000ms)
+10-15 23:44:58.286 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory clearkey
+10-15 23:44:58.287 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory default
+10-15 23:44:58.287 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory widevine
+10-15 23:44:58.288 I/DrmUtils(27809): found android.hardware.drm@1.1::IDrmFactory clearkey
+10-15 23:44:58.291 I/DrmUtils(27809): found android.hardware.drm@1.1::IDrmFactory widevine
+10-15 23:44:58.292 I/DrmUtils(27809): found android.hardware.drm@1.2::IDrmFactory clearkey
+10-15 23:44:58.294 I/DrmUtils(27809): found android.hardware.drm@1.2::IDrmFactory widevine
+10-15 23:44:58.296 I/DrmUtils(27809): found android.hardware.drm@1.3::IDrmFactory clearkey
+10-15 23:44:58.296 I/DrmUtils(27809): found android.hardware.drm@1.3::IDrmFactory widevine
+10-15 23:44:58.297 I/ClearVR (27809): DRMSessionBridge - Querying widevine support: Supported
+10-15 23:44:58.299 I/System.out(27809): false
+10-15 23:44:58.303 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.319 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.336 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.384 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.387 W/RecyclerView(27809): No adapter attached; skipping layout
+10-15 23:44:58.439 E/Surface (27809): freeAllBuffers: 1 buffers were freed while being dequeued!
+10-15 23:44:58.456 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.465 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:58.495 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.558 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.702 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:58.730 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.068 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.068 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:44:59.068 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:44:59.068 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:44:59.068 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:44:59.093 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.110 I/ClearVR (27809): SurfaceViewModel (1) - SurfaceTexture (hashcode: 152331978) size changed to 1920x1080 on: View id: 1, DOIDs: [1], isViewVisible: NOT_VISIBLE, ViewRendererConfig: ViewRenderMode: UNSET, ViewReconfigureReason: RECONFIGURING, ProjectionType: UNKNOWN, MeshTextureMode: Unknown, NRPTextureBlitMode: UNKNOWN, isSecureTextureRequired: false, videoRange: VideoRangeSDR, bitDepth: 8, attachedToWindow: true, Dimensions: 1920x1080. Source: SURFACE (active video quality: none), desiredVideoSelectionCount: 1, name: 'View for DOIDs: [1]', Render Thread Mode: Dedicated Thread. State: State: 'Registered', Payload: null. RenderMode: UNSET, Has cachedSurfaceTextureAvailableAction: false, SurfaceTexture instance counter: 0. clearVRViewActions size: 1, grid (r/c): 1/1.. (clearVRViewActions list size: 1)
+10-15 23:44:59.118 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.148 I/ClearVR (27809): SurfaceViewModel (1) - Activating ViewModel: View id: 1, DOIDs: [1], isViewVisible: VISIBLE, ViewRendererConfig: ViewRenderMode: UNSET, ViewReconfigureReason: RECONFIGURING, ProjectionType: UNKNOWN, MeshTextureMode: Unknown, NRPTextureBlitMode: UNKNOWN, isSecureTextureRequired: false, videoRange: VideoRangeSDR, bitDepth: 8, attachedToWindow: true, Dimensions: 1920x1080. Source: SURFACE (active video quality: none), desiredVideoSelectionCount: 1, name: 'View for DOIDs: [1]', Render Thread Mode: Dedicated Thread. State: State: 'ActivationPending', Payload: null. RenderMode: UNSET, Has cachedSurfaceTextureAvailableAction: false, SurfaceTexture instance counter: 0. clearVRViewActions size: 1, grid (r/c): 1/1.
+10-15 23:44:59.169 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_ASYNC"
+10-15 23:44:59.169 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_LOGFPS"
+10-15 23:44:59.169 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_PROCESS_NAME"
+10-15 23:44:59.170 E/libc    (27809): Access denied finding property "ro.vendor.sys.NV_FPSDYNAMIC"
+10-15 23:44:59.182 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.215 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.231 I/System.out(27809): false
+10-15 23:44:59.269 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Created new video decoder bridge of type: com.tiledmedia.clearvrdecoder.video.VideoDecoderBridgeSync
+10-15 23:44:59.279 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory clearkey
+10-15 23:44:59.280 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory default
+10-15 23:44:59.281 I/DrmUtils(27809): found android.hardware.drm@1.0::IDrmFactory widevine
+10-15 23:44:59.283 I/DrmUtils(27809): found android.hardware.drm@1.1::IDrmFactory clearkey
+10-15 23:44:59.285 I/DrmUtils(27809): found android.hardware.drm@1.1::IDrmFactory widevine
+10-15 23:44:59.286 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.290 I/DrmUtils(27809): found android.hardware.drm@1.2::IDrmFactory clearkey
+10-15 23:44:59.291 I/DrmUtils(27809): found android.hardware.drm@1.2::IDrmFactory widevine
+10-15 23:44:59.292 I/DrmUtils(27809): found android.hardware.drm@1.3::IDrmFactory clearkey
+10-15 23:44:59.293 I/DrmUtils(27809): found android.hardware.drm@1.3::IDrmFactory widevine
+10-15 23:44:59.319 I/ClearVR (27809): DRMSessionBridge (126017035) - Detected max simultaneous DRM sessions [50]
+10-15 23:44:59.328 I/aone.productio(27809): Background concurrent copying GC freed 142803(8131KB) AllocSpace objects, 35(688KB) LOS objects, 47% free, 26MB/50MB, paused 123us total 298.240ms
+10-15 23:44:59.342 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.359 I/ClearVR (27809): ClearVRCoreWrapper (164392756) - Calling ClearVRCore.initializeProto with parameters: # com.tiledmedia.clearvrcorewrapper.Core$InitializeParams@5f3fd381
+10-15 23:44:59.359 I/ClearVR (27809): approx_distance_from_live_edge: 0
+10-15 23:44:59.359 I/ClearVR (27809): feed_configuration {
+10-15 23:44:59.359 I/ClearVR (27809):   audio_track_selection {
+10-15 23:44:59.359 I/ClearVR (27809):     content_track_i_d {
+10-15 23:44:59.359 I/ClearVR (27809):       feed_i_d {
+10-15 23:44:59.359 I/ClearVR (27809):         content_i_d {
+10-15 23:44:59.359 I/ClearVR (27809):           u_r_l: "tme://tiledmedia.com/f2186a71-0979-4d4d-a201-6efec24ca390"
+10-15 23:44:59.359 I/ClearVR (27809):         }
+10-15 23:44:59.359 I/ClearVR (27809):       }
+10-15 23:44:59.359 I/ClearVR (27809):     }
+10-15 23:44:59.359 I/ClearVR (27809):   }
+10-15 23:44:59.359 I/ClearVR (27809):   display_object_mapping {
+10-15 23:44:59.359 I/ClearVR (27809):     display_object_id: 1
+10-15 23:44:59.359 I/ClearVR (27809):     preferred_resolution {
+10-15 23:44:59.359 I/ClearVR (27809):     }
+10-15 23:44:59.359 I/ClearVR (27809):     priority: 100
+10-15 23:44:59.359 I/ClearVR (27809):     surface_binding_capabilities {
+10-15 23:44:59.359 I/ClearVR (27809):       direct: 15
+10-15 23:44:59.359 I/ClearVR (27809):       indirect: 11
+10-15 23:44:59.359 I/ClearVR (27809):     }
+10-15 23:44:59.359 I/ClearVR (27809):     video_selection {
+10-15 23:44:59.359 I/ClearVR (27809):       content_feed_i_d {
+10-15 23:44:59.359 I/ClearVR (27809):         content_i_d {
+10-15 23:44:59.359 I/ClearVR (27809):           u_r_l: "tme://tiledmedia.com/f2186a71-0979-4d4d-a201-6efec24ca390"
+10-15 23:44:59.359 I/ClearVR (27809):         }
+10-15 23:44:59.359 I/ClearVR (27809):       }
+10-15 23:44:59.359 I/ClearVR (27809):     }
+10-15 23:44:59.359 I/ClearVR (27809):   }
+10-15 23:44:59.359 I/ClearVR (27809): }
+10-15 23:44:59.359 I/ClearVR (27809): initialize_params_header {
+10-15 23:44:59.359 I/ClearVR (27809):   device_app_i_d: "3e429c8923d878887ea58449502c612dd93c83961493b725c8d883a8833ba"
+10-15 23:44:59.359 I/ClearVR (27809):   license_base64: " [ set with size: 428 bytes ] "
+10-15 23:44:59.359 I/ClearVR (27809): }
+10-15 23:44:59.359 I/ClearVR (27809): live_resume_mode: 1
+10-15 23:44:59.359 I/ClearVR (27809): multi_view_cast_local_playback_mode: 1
+10-15 23:44:59.359 I/ClearVR (27809): single_view_cast_local_playback_mode: 1
+10-15 23:44:59.359 I/ClearVR (27809): start_position_params {
+10-15 23:44:59.359 I/ClearVR (27809):   target: 7681000
+10-15 23:44:59.359 I/ClearVR (27809):   timing_precision: TIMING_PRECISION_PRECISE
+10-15 23:44:59.359 I/ClearVR (27809):   timing_precision_value: 1
+10-15 23:44:59.359 I/ClearVR (27809):   timing_type: TIMING_TYPE_CONTENT_TIME
+10-15 23:44:59.359 I/ClearVR (27809):   timing_type_value: 1
+10-15 23:44:59.359 I/ClearVR (27809): }
+10-15 23:44:59.359 I/ClearVR (27809): v_o_d_resume_mode: 1
+10-15 23:44:59.366 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateInitializing from the core.
+10-15 23:44:59.376 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.513 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.519 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateInitialized from the core.
+10-15 23:44:59.527 I/ClearVR (27809): TiledmediaPlayer (27209082) - Updating the value of originalKeepScreenOnValue to (false)
+10-15 23:44:59.528 I/ClearVR (27809): TiledmediaPlayer (27209082) - Adding FLAG_KEEP_SCREEN_ON to activity window.
+10-15 23:44:59.551 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:44:59.552 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:44:59.564 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.565 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: HARD_RECONFIGURE
+10-15 23:44:59.566 I/ClearVR (27809): VideoDecoderBridgeShared - Waiting for reconfigure to complete...
+10-15 23:44:59.568 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:44:59.572 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Stopping decoder and releasing resources for DecoderID: 0 with no decoder instance (NOOP)
+10-15 23:44:59.572 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Stopped decoder and released resources for DecoderID: 0
+10-15 23:44:59.573 I/ClearVR (27809): VideoDecoderBridgeShared - Creating video decoder for configuration: content-type: DASH, codec: H265, frame-rate: 50.00, dims: 960x544, drm null, capabilities Decoder name: 'OMX.Nvidia.h265.decode' (might be empty string)
+10-15 23:44:59.573 I/ClearVR (27809): Mimetype: video/hevc
+10-15 23:44:59.573 I/ClearVR (27809): Video profile: HEVCProfileMain (1)
+10-15 23:44:59.573 I/ClearVR (27809): Max decoder video level: HEVCHighTierLevel51 (131072)
+10-15 23:44:59.573 I/ClearVR (27809): Flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:59.573 I/ClearVR (27809): Max number of secure samples: 0
+10-15 23:44:59.573 I/ClearVR (27809): Max number of tile rows: 0
+10-15 23:44:59.573 I/ClearVR (27809): Max number of tile columns: 0
+10-15 23:44:59.573 I/ClearVR (27809): Max number of instances: 32
+10-15 23:44:59.573 I/ClearVR (27809): Limits: 640x480p960.000, 1280x720p555.556, 1920x1080p245.098, 1920x1088p245.098, 1920x1152p231.481, 1920x1280p208.333, 1920x1536p173.611, 1920x1920p138.889, 2048x1536p162.760, 2048x2048p122.070, 2560x1080p183.824, 2560x1536p130.208, 2560x1920p104.167, 3200x1920p83.333, 3584x2048p69.754, 3840x1920p69.444, 3840x2160p61.728, 3840x2176p61.275, 
+10-15 23:44:59.573 I/ClearVR (27809): VideoDecoderBridgeShared - Calling mediaCodec.createByCodecName() for name 'OMX.Nvidia.h265.decode'...
+10-15 23:44:59.579 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:59.582 I/OMXClient(27809): IOmx service obtained
+10-15 23:44:59.583 I/OMXMaster( 3544): makeComponentInstance(OMX.Nvidia.h265.decode) in android.hardwar process
+10-15 23:44:59.591 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.611 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:59.614 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:59.616 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.616 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:44:59.617 I/ClearVR (27809): VideoDecoderBridgeShared - Calling mediaCodec.createByCodecName(). Success
+10-15 23:44:59.618 I/ClearVR (27809): VideoDecoderBridgeShared - Created MediaCodec decoder: OMX.Nvidia.h265.decode (OMX.Nvidia.h265.decode). Configuration: content-type: DASH, codec: H265, frame-rate: 50.00, dims: 960x544, drm null, capabilities Decoder name: 'OMX.Nvidia.h265.decode' (might be empty string)
+10-15 23:44:59.618 I/ClearVR (27809): Mimetype: video/hevc
+10-15 23:44:59.618 I/ClearVR (27809): Video profile: HEVCProfileMain (1)
+10-15 23:44:59.618 I/ClearVR (27809): Max decoder video level: HEVCHighTierLevel51 (131072)
+10-15 23:44:59.618 I/ClearVR (27809): Flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:59.618 I/ClearVR (27809): Max number of secure samples: 0
+10-15 23:44:59.618 I/ClearVR (27809): Max number of tile rows: 0
+10-15 23:44:59.618 I/ClearVR (27809): Max number of tile columns: 0
+10-15 23:44:59.618 I/ClearVR (27809): Max number of instances: 32
+10-15 23:44:59.618 I/ClearVR (27809): Limits: 640x480p960.000, 1280x720p555.556, 1920x1080p245.098, 1920x1088p245.098, 1920x1152p231.481, 1920x1280p208.333, 1920x1536p173.611, 1920x1920p138.889, 2048x1536p162.760, 2048x2048p122.070, 2560x1080p183.824, 2560x1536p130.208, 2560x1920p104.167, 3200x1920p83.333, 3584x2048p69.754, 3840x1920p69.444, 3840x2160p61.728, 3840x2176p61.275, 
+10-15 23:44:59.619 I/ClearVR (27809): VideoDecoderBridgeShared - Waiting for DIRECT Decoder Surface to become available for query parameters: QuerySurfaceParameters(decoderSurfaceBindingType=DIRECT, decoderID=0, displayObjectMappingInfo=1:0#d!s, fps=50.000, textureHDRType=2, textureIsL1Protected=false, textureBitDepth=10, displayWidth=960, displayHeight=540, displayObjectID=1, projectionType=0)
+10-15 23:44:59.635 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.673 I/ClearVR (27809): VideoDecoderBridgeShared - Waited 55 msec for DIRECT Decoder Surface to become available. Surface: Surface(name=null)/@0x91466ca
+10-15 23:44:59.677 I/ClearVR (27809): VideoDecoderBridgeShared - Configuring video decoder id 0 (name: 'OMX.Nvidia.h265.decode') with surface Surface(name=null)/@0x91466ca for configuration: content-type: DASH, codec: H265, frame-rate: 50.00, dims: 960x544, drm null, capabilities Decoder name: 'OMX.Nvidia.h265.decode' (might be empty string)
+10-15 23:44:59.677 I/ClearVR (27809): Mimetype: video/hevc
+10-15 23:44:59.677 I/ClearVR (27809): Video profile: HEVCProfileMain (1)
+10-15 23:44:59.677 I/ClearVR (27809): Max decoder video level: HEVCHighTierLevel51 (131072)
+10-15 23:44:59.677 I/ClearVR (27809): Flags: [FLAG_HARDWARE, FLAG_LOW_LATENCY]
+10-15 23:44:59.677 I/ClearVR (27809): Max number of secure samples: 0
+10-15 23:44:59.677 I/ClearVR (27809): Max number of tile rows: 0
+10-15 23:44:59.677 I/ClearVR (27809): Max number of tile columns: 0
+10-15 23:44:59.677 I/ClearVR (27809): Max number of instances: 32
+10-15 23:44:59.677 I/ClearVR (27809): Limits: 640x480p960.000, 1280x720p555.556, 1920x1080p245.098, 1920x1088p245.098, 1920x1152p231.481, 1920x1280p208.333, 1920x1536p173.611, 1920x1920p138.889, 2048x1536p162.760, 2048x2048p122.070, 2560x1080p183.824, 2560x1536p130.208, 2560x1920p104.167, 3200x1920p83.333, 3584x2048p69.754, 3840x1920p69.444, 3840x2160p61.728, 3840x2176p61.275, 
+10-15 23:44:59.678 I/ClearVR (27809): VideoDecoderBridgeShared - Calling mediaCodec.configure 'OMX.Nvidia.h265.decode' (attempt 1)... Format: {feature-low-latency=1, mime=video/hevc, width=960, priority=0, frame-rate=50.0, rotation-degrees=0, height=544}, mediaCrypto set: false.
+10-15 23:44:59.678 I/MediaCodec(27809): mContentRefreshRate = 50.0
+10-15 23:44:59.678 D/MediaCodec(27809): flushMediametrics
+10-15 23:44:59.678 D/SurfaceUtils(27809): connecting to surface 0x3141e9ba60, reason connectToSurface
+10-15 23:44:59.679 I/MediaCodec(27809): [OMX.Nvidia.h265.decode] setting surface generation to 28476417
+10-15 23:44:59.679 D/SurfaceUtils(27809): disconnecting from surface 0x3141e9ba60, reason connectToSurface(reconnect)
+10-15 23:44:59.679 D/SurfaceUtils(27809): connecting to surface 0x3141e9ba60, reason connectToSurface(reconnect)
+10-15 23:44:59.680 E/OMXNodeInstance( 3544): getParameter(0x517c0320:Nvidia.h265.decode, ??(0x6f600011)) ERROR: NotImplemented(0x80001006)
+10-15 23:44:59.681 W/ACodec  (27809): Over-riding the width: 960 with max-width: 1920
+10-15 23:44:59.681 W/ACodec  (27809): Over-riding the height: 544 with max-height: 1080
+10-15 23:44:59.687 D/NvOsDebugPrintf( 3544): WARNING! HDRStatic info being set, even for non SMPTE 2084 case
+10-15 23:44:59.687 D/NvOsDebugPrintf( 3544): WARNING! This media may play as non HDR
+10-15 23:44:59.688 I/ACodec  (27809): Enable timestamp filtering for Video Decoder
+10-15 23:44:59.688 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.689 E/OMXNodeInstance( 3544): getConfig(0x517c0320:Nvidia.h265.decode, ConfigAndroidVendorExtension(0x6f100004)) ERROR: UnsupportedIndex(0x8000101a)
+10-15 23:44:59.691 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:44:59.691 I/ACodec  (27809): Scaled Width is 960, height is 544
+10-15 23:44:59.693 I/ClearVR (27809): VideoDecoderBridgeShared - Calling mediaCodec.configure 'OMX.Nvidia.h265.decode' (attempt 1). Success!
+10-15 23:44:59.709 D/SurfaceUtils(27809): set up nativeWindow 0x3141e9ba60 for 960x544, color 0x106, rotation 0, usage 0x2900
+10-15 23:44:59.712 I/ClearVR (27809): VideoDecoderBridgeShared - Waiting for reconfigure to complete. SUCCESS! Elapsed time: 146 ms
+10-15 23:44:59.712 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 146 msec
+10-15 23:44:59.713 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - First input buffer dequeued for decoder ID: 0, decoder instance: OMX.Nvidia.h265.decode
+10-15 23:44:59.727 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.727 D/NvOsDebugPrintf( 3544): OPENMAX: HandleNewStreamFormat: 3609: Send OMX_EventPortSettingsChanged: nFrameWidth = 960, nFrameHeight = 540 
+10-15 23:44:59.728 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:44:59.728 I/ACodec  (27809): Scaled Width is 960, height is 540
+10-15 23:44:59.731 D/SurfaceUtils(27809): set up nativeWindow 0x3141e9ba60 for 960x540, color 0x18b, rotation 0, usage 0x2900
+10-15 23:44:59.749 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:44:59.749 I/ACodec  (27809): Scaled Width is 960, height is 540
+10-15 23:44:59.751 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Updated currentMediaFormat 'OMX.Nvidia.h265.decode': {crop-right=959, color-format=395, slice-height=540, mime=video/raw, hdr-static-info=java.nio.HeapByteBuffer[pos=0 lim=25 cap=25], stride=960, color-standard=6, display-width=960, color-transfer=7, crop-bottom=539, display-height=540, crop-left=0, width=960, color-range=2, crop-top=0, height=540}
+10-15 23:44:59.751 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - First output buffer (with video) dequeued for decoder ID: 0, decoder instance: OMX.Nvidia.h265.decode
+10-15 23:44:59.752 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - video output buffers held: current=1 highWater=1
+10-15 23:44:59.786 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.844 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:44:59.892 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:00.117 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:00.204 W/nvaudio_hw( 3359): stop_output_stream: 1 underruns seen on pcm device hdmi-playback
+10-15 23:45:00.706 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:00.706 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:00.783 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:00.795 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:00.798 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:00.799 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:00.800 E/OMXNodeInstance( 3544): getConfig(0x517c13c0:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:00.800 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:00.800 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:00.804 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:00.808 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:00.856 D/AudioTrack(27809): getTimestamp_l(897): device stall time corrected using current time 1744938993575235
+10-15 23:45:00.879 D/AudioTrack(27809): getTimestamp_l(897): stale timestamp time corrected, currentTimeNanos: 1744938341116954 < limitNs: 1744938945981693 < mStartNs: 1744938987981693
+10-15 23:45:00.879 W/AudioTrack(27809): getTimestamp_l(897): retrograde timestamp time corrected, 1744938945981693 < 1744938993575235
+10-15 23:45:01.101 E/memtrack(27809): Couldn't load memtrack module
+10-15 23:45:03.338 I/ClearVR (27809): VideoDecoderBridgeShared - Trigger Query Surface Only -> query surface parameters changed, but only ViewRendererConfig related parameters potentially changed...
+10-15 23:45:03.338 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: TRIGGER_QUERY_SURFACE_ONLY
+10-15 23:45:03.338 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:03.339 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - QuerySurfaceParameters changed in flight (either contents or hashcode).
+10-15 23:45:03.339 I/ClearVR (27809): New query surface params (-1625077572): QuerySurfaceParameters(decoderSurfaceBindingType=DIRECT, decoderID=0, displayObjectMappingInfo=1:0#d!s, fps=50.000, textureHDRType=2, textureIsL1Protected=false, textureBitDepth=10, displayWidth=3840, displayHeight=2160, displayObjectID=1, projectionType=0)
+10-15 23:45:03.339 I/ClearVR (27809): Old query surface params (-1627895472): QuerySurfaceParameters(decoderSurfaceBindingType=DIRECT, decoderID=0, displayObjectMappingInfo=1:0#d!s, fps=50.000, textureHDRType=2, textureIsL1Protected=false, textureBitDepth=10, displayWidth=960, displayHeight=540, displayObjectID=1, projectionType=0)
+10-15 23:45:03.339 I/ClearVR (27809): VideoDecoderBridgeShared - Waiting for DIRECT Decoder Surface to become available for query parameters: QuerySurfaceParameters(decoderSurfaceBindingType=DIRECT, decoderID=0, displayObjectMappingInfo=1:0#d!s, fps=50.000, textureHDRType=2, textureIsL1Protected=false, textureBitDepth=10, displayWidth=3840, displayHeight=2160, displayObjectID=1, projectionType=0)
+10-15 23:45:03.359 I/ClearVR (27809): VideoDecoderBridgeShared - Waited 19 msec for DIRECT Decoder Surface to become available. Surface: Surface(name=null)/@0x91466ca
+10-15 23:45:03.359 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 21 msec
+10-15 23:45:03.548 D/NvOsDebugPrintf( 3544): OPENMAX: HandleNewStreamFormat: 3609: Send OMX_EventPortSettingsChanged: nFrameWidth = 3840, nFrameHeight = 2176 
+10-15 23:45:03.549 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:45:03.549 I/ACodec  (27809): Scaled Width is 960, height is 540
+10-15 23:45:03.660 D/SurfaceUtils(27809): set up nativeWindow 0x3141e9ba60 for 3840x2176, color 0x18b, rotation 0, usage 0x2900
+10-15 23:45:03.901 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:45:03.901 I/ACodec  (27809): Scaled Width is 3840, height is 2160
+10-15 23:45:03.901 I/ACodec  (27809): Get OMX_IndexConfigScale: 0x10000/0x10000
+10-15 23:45:03.901 I/ACodec  (27809): Scaled Width is 3840, height is 2160
+10-15 23:45:03.903 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Updated currentMediaFormat 'OMX.Nvidia.h265.decode': {crop-right=3839, color-format=395, slice-height=2176, mime=video/raw, hdr-static-info=java.nio.HeapByteBuffer[pos=0 lim=25 cap=25], stride=3840, color-standard=6, display-width=3840, color-transfer=7, crop-bottom=2159, display-height=2160, crop-left=0, width=3840, color-range=2, crop-top=0, height=2176}
+10-15 23:45:07.951 W/aone.productio(27809): Checksum mismatch for dex base.apk!classes7.dex
+10-15 23:45:07.951 W/aone.productio(27809): Could not add methods to the existing profiler. Clearing the profile data.
+10-15 23:45:09.773 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - video output buffers held: current=7 highWater=8
+10-15 23:45:19.795 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - video output buffers held: current=6 highWater=9
+10-15 23:45:22.030 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:22.031 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:22.082 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:22.083 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:22.089 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:22.089 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:22.092 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:22.092 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 3 msec
+10-15 23:45:22.096 D/AudioTrack(27809): stop(897): called with 1018880 frames delivered
+10-15 23:45:22.121 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:22.122 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:22.131 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:22.132 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:22.253 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:22.340 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:22.398 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:22.398 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:22.406 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:22.412 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:22.415 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:22.415 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:22.417 E/OMXNodeInstance( 3544): getConfig(0x517c1350:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:22.417 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:22.417 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:22.422 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:22.425 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:22.451 D/AudioTrack(27809): getTimestamp_l(898): device stall time corrected using current time 1744960588312623
+10-15 23:45:28.301 I/newrelic(27809): Connecting, saved state is not available: DataToken{accountId=0, agentId=0}
+10-15 23:45:28.318 E/newrelic(27809): Failed to retrieve collector response: Failed to connect to mobile-collector.newrelic.com/0.0.0.0:443
+10-15 23:45:28.318 E/newrelic(27809): HarvestConnection: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:28.320 E/newrelic(27809): An unknown error occurred when connecting to the Collector.
+10-15 23:45:28.346 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:28.467 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:28.571 I/aone.productio(27809): Background concurrent copying GC freed 160640(8441KB) AllocSpace objects, 244(16MB) LOS objects, 47% free, 26MB/50MB, paused 102us total 233.577ms
+10-15 23:45:28.628 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:28.635 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:29.804 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - video output buffers held: current=6 highWater=8
+10-15 23:45:30.392 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:30.393 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:30.508 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:30.508 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:30.514 D/AudioTrack(27809): stop(898): called with 388096 frames delivered
+10-15 23:45:30.515 D/ACodec  (27809): REUSING read fence 190 as write fence in submitRegularOutputBuffers
+10-15 23:45:30.522 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:30.523 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:30.524 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:30.524 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:30.525 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:30.527 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:30.527 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:30.529 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 5 msec
+10-15 23:45:30.541 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:30.541 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:30.544 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:30.558 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:30.561 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:30.561 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:30.563 E/OMXNodeInstance( 3544): getConfig(0x517c1350:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:30.563 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:30.564 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:30.578 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:30.581 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:30.621 D/AudioTrack(27809): getTimestamp_l(899): device stall time corrected using current time 1744968758749807
+10-15 23:45:30.645 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:30.680 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:30.807 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:30.849 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:31.651 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:31.662 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:32.801 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:32.802 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:32.802 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:32.802 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:32.858 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:32.859 D/AudioTrack(27809): stop(899): called with 108544 frames delivered
+10-15 23:45:32.861 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:32.861 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:32.865 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 4 msec
+10-15 23:45:32.866 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:32.866 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:32.870 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:32.871 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:32.968 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:32.969 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:32.973 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:32.973 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:33.009 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:33.009 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:33.009 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:33.009 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 0 msec
+10-15 23:45:33.073 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:33.219 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:33.448 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:33.448 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:33.453 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:33.464 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:33.478 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:33.482 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:33.482 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:33.483 E/OMXNodeInstance( 3544): getConfig(0x517c1350:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:33.484 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:33.485 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:33.491 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:33.496 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:33.528 D/AudioTrack(27809): getTimestamp_l(900): device stall time corrected using current time 1744971665910014
+10-15 23:45:33.664 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:33.677 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:34.864 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:34.865 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:34.872 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:34.873 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:34.922 D/AudioTrack(27809): stop(900): called with 68608 frames delivered
+10-15 23:45:34.927 D/ACodec  (27809): REUSING read fence 173 as write fence in submitRegularOutputBuffers
+10-15 23:45:34.928 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:34.929 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:34.929 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:34.930 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 0 msec
+10-15 23:45:34.933 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:34.934 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:34.939 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:34.940 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:34.992 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.004 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:35.005 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:35.008 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:35.009 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:35.028 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.042 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:35.042 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:35.043 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:35.043 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 1 msec
+10-15 23:45:35.047 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.083 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.120 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.139 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:35.140 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:35.144 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:35.144 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:35.172 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.174 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:35.174 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:35.175 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:35.177 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 2 msec
+10-15 23:45:35.207 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.253 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.255 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:35.256 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:35.262 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:35.270 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:35.272 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:35.272 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:35.275 E/OMXNodeInstance( 3544): getConfig(0x517c1580:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:35.276 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:35.276 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:35.286 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:35.291 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.291 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:35.295 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:35.296 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:35.347 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.412 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.458 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.474 I/aone.productio(27809): Background young concurrent copying GC freed 140421(7388KB) AllocSpace objects, 273(16MB) LOS objects, 46% free, 27MB/50MB, paused 100us total 130.154ms
+10-15 23:45:35.511 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.543 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.549 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:35.549 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:35.584 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.593 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:35.593 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:35.599 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:35.599 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:35.599 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:35.601 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 2 msec
+10-15 23:45:35.614 D/AudioTrack(27809): stop(901): called with 14336 frames delivered
+10-15 23:45:35.623 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:35.626 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:35.633 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:35.633 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:35.636 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.680 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:35.736 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:35.738 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:35.914 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:36.110 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:36.110 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:36.110 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:36.111 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 1 msec
+10-15 23:45:36.112 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:36.113 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:36.287 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:36.348 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:36.476 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:36.540 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:36.540 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:36.547 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:36.552 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:36.554 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:36.554 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:36.557 E/OMXNodeInstance( 3544): getConfig(0x517c1580:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:36.557 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:36.562 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:36.569 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:36.571 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:36.619 D/AudioTrack(27809): getTimestamp_l(902): device stall time corrected using current time 1744974756311940
+10-15 23:45:36.739 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:36.774 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:39.831 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - video output buffers held: current=6 highWater=8
+10-15 23:45:40.372 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateSeeking from the core.
+10-15 23:45:40.373 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: SEEKING
+10-15 23:45:40.809 I/ClearVR (27809): TiledmediaPlayer (27209082) - Received message code ClearVRCoreStateRunning from the core.
+10-15 23:45:40.809 I/ClearVR (27809): TiledmediaPlayer (27209082) - Successfully set MediaFlow state to: PLAYING
+10-15 23:45:40.840 I/ClearVR (27809): VideoDecoderBridgeShared - Not reconfiguring -> bitstream change does not require reconfigure...
+10-15 23:45:40.840 I/ClearVR (27809): VideoDecoderBridgeSync (100677509) - Video decoder ID: 0 reconfigure action: NO_RECONFIGURE
+10-15 23:45:40.840 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action started for decoder ID: 0.
+10-15 23:45:40.840 I/ClearVR (27809): VideoDecoderBridgeShared - Video decoder reconfigure action finished for decoder ID: 0. Took: 0 msec
+10-15 23:45:40.857 D/AudioTrack(27809): stop(902): called with 204800 frames delivered
+10-15 23:45:40.865 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 3 mTargetState: 3
+10-15 23:45:40.865 I/SimpleSoftOMXComponent( 3544): state: 1, mState: 2 mTargetState: 2
+10-15 23:45:40.870 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:40.870 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:40.990 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:41.163 E/newrelic(27809): TransactionStateUtil: Attempting to convert network exception java.net.ConnectException to error code.
+10-15 23:45:41.372 I/OMXClient(27809): IOmx service obtained
+10-15 23:45:41.372 I/OMXMaster( 3544): makeComponentInstance(OMX.google.aac.decoder) in android.hardwar process
+10-15 23:45:41.375 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:41.381 I/android_os_HwBinder(27809): HwBinder: Starting thread pool for getting: vendor.nvidia.hardware.cpl.service_common@1.0::INvCplHalCommonService/default
+10-15 23:45:41.384 I/MediaCodec(27809): MediaCodec will operate in async mode
+10-15 23:45:41.385 D/MediaCodec(27809): flushMediametrics
+10-15 23:45:41.386 E/OMXNodeInstance( 3544): getConfig(0x517c1580:google.aac.decoder, ConfigAndroidVendorExtension(0x6f100004)) ERROR: Undefined(0x80001001)
+10-15 23:45:41.386 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:41.387 I/SimpleSoftOMXComponent( 3544): state: 2, mState: 1 mTargetState: 1
+10-15 23:45:41.401 I/SimpleSoftOMXComponent( 3544): state: 3, mState: 2 mTargetState: 2
+10-15 23:45:41.404 D/SoftAAC2( 3544): get OMX_IndexParamAudioAndroidAacDrcPresentation
+10-15 23:45:41.777 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:41.789 W/newrelic(27809): Event queue time [60] exceeded
+10-15 23:45:42.395 I/aone.productio(27809): Background concurrent copying GC freed 161450(8044KB) AllocSpace objects, 351(16MB) LOS objects, 47% free, 27MB/51MB, paused 85us total 213.577ms
