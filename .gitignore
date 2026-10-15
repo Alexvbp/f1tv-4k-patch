@@ -6,3 +6,7 @@ download/
 __pycache__/
 *.pyc
 .env
+
+# Local diagnostics (capture_logs.sh output) — device IDs, never commit
+f1tv-logs-*
+*.tmlog

@@ -258,43 +258,12 @@ else
     warn "DiagnosticsPreferenceManagerImpl.smali not found, skipping diagnostics patch"
 fi
 
-# ─── Spoof device model in request header ────────────────────────────────────
-
-info "Searching for TvApplication.smali..."
-TVAPP_SMALI="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"
-if [[ -n "${TVAPP_SMALI}" ]]; then
-    ok "Found: ${TVAPP_SMALI#${WORKDIR}/}"
-    info "Spoofing device model as Chromecast in request header..."
-    python3 - "${TVAPP_SMALI}" << 'PYEOF'
-import sys
-
-smali_path = sys.argv[1]
-with open(smali_path, 'r') as f:
-    content = f.read()
-
-# Replace Build.MODEL read with hardcoded "chromecast" string
-# Original: sget-object v1, Landroid/os/Build;->MODEL:Ljava/lang/String;
-# We replace the MODEL read + toLowerCase block with a const-string
-old = '    sget-object v1, Landroid/os/Build;->MODEL:Ljava/lang/String;'
-new = '    const-string v1, "Chromecast"'
-
-if old not in content:
-    print("ERROR: Could not find Build.MODEL in getRequestHeader!", file=sys.stderr)
-    sys.exit(1)
-
-content = content.replace(old, new, 1)
-
-with open(smali_path, 'w') as f:
-    f.write(content)
-
-print("Spoofed Build.MODEL as 'Chromecast' in request header")
-PYEOF
-
-    [[ $? -eq 0 ]] || die "Model spoof patch failed"
-    ok "Model spoof patch applied"
-else
-    warn "TvApplication.smali not found, skipping model spoof"
-fi
+# NOTE: the old "spoof Build.MODEL as Chromecast" patch was removed. It replaced
+# the FIRST Build.MODEL read in TvApplication.smali, which lives in
+# getDeviceType() (the Amazon Fire-Stick vs Fire-TV check), not in
+# getRequestHeader() — so the x-f1-device-info header always carried the real
+# model and the only effect was mis-detecting Amazon devices. The UHD whitelist
+# is bypassed client-side (validateIsUhdSupportedDevice) so no spoof is needed.
 
 # ─── Patch ClearVR decoder capabilities (force 4K tiled streaming) ─────────
 
@@ -409,68 +378,11 @@ else
     warn "Quirks.smali not found, skipping NVIDIA workaround patch"
 fi
 
-# ─── Patch NRP blit mode to NATIVE_ANDROID_DIRECT_TO_VIEW ──────────────────
-#
-# Tiledmedia's default blit mode (AUTO_DETECT) routes decoded frames through
-# GPU tile composition via SurfaceTexture → EGL → swapBuffers. This causes
-# frame drops on weaker GPUs and may fail on devices that don't support
-# intermediate resolutions during the quality ramp (e.g. 2560x1620).
-# The SDK has a built-in NATIVE_ANDROID_DIRECT_TO_VIEW mode that bypasses
-# GPU composition and outputs the decoder directly to the SurfaceView.
-#
-# DEFAULT OFF. direct-to-view tags the output surface with the CONTENT's transfer
-# (HLG for F1 UHD) and does no gamut conversion. On a panel that accepts HDR10 but
-# not HLG the compositor can't switch modes and shows the BT.2020 frames through
-# an SDR/Rec.709 surface with no conversion — i.e. washed-out colours. The default
-# EGL/GL render path (this patch skipped) composites the tiles and does a correct
-# BT.2020→Rec.709 conversion, giving accurate 4K. Set F1TV_DIRECT_TO_VIEW=1 to
-# force direct-to-view on weak/Amlogic GPUs that drop frames on the GL path
-# (accepting the washed-out HDR look as the tradeoff).
-
-RENDER_CONFIG="$(find "${DECOMPILED}" -name 'RenderAPIConfig.smali' -path '*/tiledmedia/*' -print -quit 2>/dev/null || true)"
-
-if [[ "${F1TV_DIRECT_TO_VIEW:-0}" == "0" ]]; then
-    info "Using the EGL/GL render path for correct 4K colours (set F1TV_DIRECT_TO_VIEW=1 for weak/Amlogic GPUs)"
-elif [[ -n "${RENDER_CONFIG}" && -f "${RENDER_CONFIG}" ]]; then
-    info "Patching NRP blit mode to direct-to-view (opt-in, for weak/Amlogic GPUs)..."
-    python3 - "${RENDER_CONFIG}" << 'PYEOF'
-import sys
-
-path = sys.argv[1]
-with open(path, 'r') as f:
-    content = f.read()
-
-# Patch getNRPTextureBlitMode() to always return NATIVE_ANDROID_DIRECT_TO_VIEW.
-# Original:
-#   iget-object v0, p0, ...->nrpTextureBlitMode
-#   return-object v0
-#
-# Patched:
-#   return NATIVE_ANDROID_DIRECT_TO_VIEW unconditionally
-
-old = """    iget-object v0, p0, Lcom/tiledmedia/clearvrview/RenderAPIConfig;->nrpTextureBlitMode:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
-
-    return-object v0"""
-
-new = """    sget-object v0, Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;->NATIVE_ANDROID_DIRECT_TO_VIEW:Lcom/tiledmedia/clearvrenums/NRPTextureBlitMode;
-
-    return-object v0"""
-
-if old not in content:
-    print(f"Could not find getNRPTextureBlitMode pattern in {path}", file=sys.stderr)
-    sys.exit(1)
-
-content = content.replace(old, new, 1)
-
-with open(path, 'w') as f:
-    f.write(content)
-print(f"  Patched {path}")
-PYEOF
-
-    [[ $? -eq 0 ]] && ok "NRP direct-to-view patch applied (all devices)" || warn "NRP direct-to-view patch failed"
-else
-    warn "RenderAPIConfig.smali not found, skipping direct-to-view patch"
-fi
+# NOTE: the old opt-in F1TV_DIRECT_TO_VIEW patch (RenderAPIConfig.getNRPTextureBlitMode)
+# was removed. ClearVR SDK ≥ SP164 (F1TV 3.0.49.x) no longer has an app-level
+# blit-mode switch: the core now picks DIRECT vs GL rendering per view from the
+# surface capabilities the SDK reports. We feed it honest capabilities instead —
+# see "Surface HDR capability" below.
 
 # ─── Force 4K display detection (lifts the 1.5x resolution cap) ─────────────
 #
@@ -533,89 +445,157 @@ else
     warn "TrueTVDisplaySizeHelper.smali not found, skipping 4K display patch"
 fi
 
-# ─── HLG/HDR unlock (default ON — required for the 2160p tier) ──────────────
+# ─── HDR advertise + real EGL probes (default ON — required for the 2160p tier) ─
 #
 # F1TV only serves the 2160p tier inside the HDR manifest; SDR is hard-capped at
 # 1620p server-side. ClearVR reports which HDR transfer functions it can render
 # to the F1TV backend via DeviceParameters -> addEglSupportedHDRTypes(PQ/HLG),
-# and that call is gated SOLELY on getIsBt2020HlgExtensionSupported(). The NVIDIA
-# Shield's EGL does not expose the BT2020 colorspace extension, so unpatched the
-# SDK reports "no EGL HDR" and the backend withholds EVERY 2160p tier (they are
-# all HDR). Forcing the check true makes ClearVR report PQ+HLG, so the 2160p HDR
-# tier is offered — this is REQUIRED for 4K, not a fallback.
+# and that call is gated SOLELY on EGLRenderTarget.getIsBt2020HlgExtensionSupported().
+# Most Android TV GPUs (NVIDIA Shield included) do not expose the EGL BT2020 HLG
+# colorspace extension, so unpatched the SDK reports "no EGL HDR" and the backend
+# withholds EVERY 2160p tier. Forcing that method true makes the 2160p HDR tier
+# be offered — this is REQUIRED for 4K.
 #
-# The direct-to-view blit patch above is what makes this safe: the decoder
-# outputs straight to the SurfaceView, so Android's display pipeline handles HLG
-# instead of the EGL colorspace path that would otherwise fail on the Shield. The
-# real display-capability probe (doesDisplaySupport) still runs, so SDR-only
-# panels fall back to SDR automatically. Set F1TV_HLG_BYPASS=0 to skip this patch.
+# The forced answer must NOT leak into the render path though, so the original
+# probe is preserved under new names and used by the patches below to pick the
+# right path per device at runtime:
+#   uhdRealHlgSupported()  — the stock HLG probe (EGL_EXT_gl_colorspace_bt2020_hlg)
+#   uhdRealPqSupported()   — raw PQ probe (EGL_EXT_gl_colorspace_bt2020_pq), with
+#                            no API-level gate (stock gates PQ on API 33+, which
+#                            wrongly excludes the Shield on Android 11)
+# Set F1TV_HLG_BYPASS=0 to skip (the 2160p tier will then NOT be offered).
 
 if [[ "${F1TV_HLG_BYPASS:-1}" != "0" ]]; then
-    info "Patching HLG extension support (required for the 2160p HDR tier)..."
+    info "Patching EGL HDR advertise + adding real HLG/PQ probes (required for the 2160p tier)..."
     EGL_RENDER="$(find "${DECOMPILED}" -name 'EGLRenderTarget.smali' -path '*/tiledmedia/*' -print -quit)"
-    if [[ -n "${EGL_RENDER}" ]]; then
-        ok "Found: ${EGL_RENDER#${WORKDIR}/}"
-        python3 - "${EGL_RENDER}" << 'PYEOF'
+    [[ -n "${EGL_RENDER}" ]] || die "EGLRenderTarget.smali not found — cannot unlock the 2160p tier"
+    ok "Found: ${EGL_RENDER#${WORKDIR}/}"
+    if ! python3 - "${EGL_RENDER}" << 'PYEOF'
 import sys, re
 
 path = sys.argv[1]
-with open(path, 'r') as f:
+with open(path) as f:
     content = f.read()
 
-# Force getIsBt2020HlgExtensionSupported() to always return true.
-pattern = (
-    r'\.method public static getIsBt2020HlgExtensionSupported\(\)Z'
-    r'.*?'
-    r'\.end method'
-)
-replacement = """.method public static getIsBt2020HlgExtensionSupported()Z
+C = 'Lcom/tiledmedia/clearvrview/EGLRenderTarget;'
+
+# 1. Keep the stock HLG probe, renamed to uhdRealHlgSupported().
+pattern = r'\.method public static getIsBt2020HlgExtensionSupported\(\)Z\n(?P<body>.*?)\.end method'
+m = re.search(pattern, content, flags=re.DOTALL)
+if not m:
+    print("ERROR: getIsBt2020HlgExtensionSupported not found", file=sys.stderr)
+    sys.exit(1)
+body = m.group('body')
+if 'EGL_EXT_gl_colorspace_bt2020_hlg' not in body or '_getIsExtensionSupported' not in body:
+    print("ERROR: getIsBt2020HlgExtensionSupported body does not look like the stock EGL probe", file=sys.stderr)
+    sys.exit(1)
+
+real_hlg = ".method public static uhdRealHlgSupported()Z\n" + body + ".end method"
+
+# 2. Forced advertise — what DeviceParameters reports to the backend.
+forced = """.method public static getIsBt2020HlgExtensionSupported()Z
     .locals 1
 
-    # UHD Patch: always advertise HLG support
+    # UHD Patch: always advertise HLG so the 2160p (HDR) tier is offered
     const/4 v0, 0x1
 
     return v0
 .end method"""
 
-content, count = re.subn(pattern, replacement, content, flags=re.DOTALL)
-if count == 0:
-    print("ERROR: getIsBt2020HlgExtensionSupported not found", file=sys.stderr)
+# 3. Raw PQ probe (cached), no API-level gate.
+real_pq = f""".method public static uhdRealPqSupported()Z
+    .locals 1
+
+    sget-boolean v0, {C}->uhdPqDetected:Z
+
+    if-nez v0, :cond_0
+
+    const/4 v0, 0x1
+
+    sput-boolean v0, {C}->uhdPqDetected:Z
+
+    const-string v0, "EGL_EXT_gl_colorspace_bt2020_pq"
+
+    invoke-static {{v0}}, {C}->_getIsExtensionSupported(Ljava/lang/String;)Z
+
+    move-result v0
+
+    sput-boolean v0, {C}->uhdPqSupported:Z
+
+    :cond_0
+    sget-boolean v0, {C}->uhdPqSupported:Z
+
+    return v0
+.end method"""
+
+# 4. "Can this GL surface show HLG content correctly?" — natively, or via the
+#    PQ reroute in RenderTargetConfig. Reported to the core as the surface's HLG
+#    capability so devices with neither extension are routed off the GL HDR path.
+hlg_renderable = f""".method public static uhdSurfaceHlgRenderable()Z
+    .locals 1
+
+    invoke-static {{}}, {C}->uhdRealHlgSupported()Z
+
+    move-result v0
+
+    if-eqz v0, :cond_0
+
+    const/4 v0, 0x1
+
+    return v0
+
+    :cond_0
+    invoke-static {{}}, {C}->uhdRealPqSupported()Z
+
+    move-result v0
+
+    return v0
+.end method"""
+
+content = content[:m.start()] + "\n\n".join([real_hlg, forced, real_pq, hlg_renderable]) + content[m.end():]
+
+# Backing fields for the PQ cache.
+anchor = '.field private static _isBt2020PqExtensionSupportedDetected:Z\n'
+if anchor not in content:
+    print("ERROR: field anchor _isBt2020PqExtensionSupportedDetected not found", file=sys.stderr)
     sys.exit(1)
+content = content.replace(anchor, anchor + '\n.field private static uhdPqDetected:Z\n\n.field private static uhdPqSupported:Z\n', 1)
 
 with open(path, 'w') as f:
     f.write(content)
-print(f"Patched getIsBt2020HlgExtensionSupported -> true")
+print("getIsBt2020HlgExtensionSupported -> true; added uhdRealHlgSupported/uhdRealPqSupported/uhdSurfaceHlgRenderable")
 PYEOF
-
-        [[ $? -eq 0 ]] || die "HLG bypass patch failed"
-        ok "HLG bypass patch applied"
-    else
-        warn "EGLRenderTarget.smali not found, skipping HLG bypass"
+    then
+        die "HDR advertise patch failed"
     fi
+    ok "HDR advertise patch applied"
 else
-    warn "F1TV_HLG_BYPASS=0 — skipping HLG unlock; the 2160p tier will NOT be offered (SDR caps at 1620p)"
+    warn "F1TV_HLG_BYPASS=0 — skipping HDR advertise; the 2160p tier will NOT be offered (SDR caps at 1620p)"
 fi
 
-# ─── Reroute HLG content to the PQ render path (default ON) ─────────────────
+# ─── Runtime HLG→PQ reroute (only where the GPU lacks the HLG colorspace) ───
 #
-# F1TV's 2160p is HLG. Many devices (notably the NVIDIA Shield) expose the EGL
-# BT2020 *PQ* colorspace (EGL_EXT_gl_colorspace_bt2020_pq) but NOT the *HLG* one.
-# On the EGL/GL render path ClearVR tags F1 content requireHLG and tries to create
-# an HLG EGL surface (EGLRenderTarget surface-creation reads
-# RenderTargetConfig.requireHLG()/require2020PQ()), which fails on those devices
-# and drops to SDR 1620p.
+# F1TV's 2160p is HLG. On the GL render path ClearVR tags F1 content requireHLG
+# and creates an HLG EGL surface. Devices like the NVIDIA Shield expose the EGL
+# BT2020 *PQ* colorspace but not the *HLG* one, so that surface creation fails
+# and playback drops to SDR 1620p. Rerouting HLG content through the PQ
+# colorspace fixes the Shield — but doing it unconditionally (as releases up to
+# 3.0.49.4 did) ALSO hits devices that DO support HLG (Homatics, Mi Box, HLG TVs):
+# HLG-encoded pixels shown through a PQ-tagged surface come out dark with
+# crushed blacks (issue #20).
 #
-# This reroutes the render path: requireHLG() -> false, require2020PQ() -> (PQ||HLG),
-# so the HDR tiles are rendered through the PQ colorspace the device DOES support
-# and correctly gamut-converted for output. SDR content (both flags false) is
-# unaffected. Pairs with the default EGL path (F1TV_DIRECT_TO_VIEW=0); it is inert
-# under direct-to-view. Set F1TV_PQ_REROUTE=0 to disable.
-if [[ "${F1TV_PQ_REROUTE:-1}" != "0" ]]; then
-    info "Rerouting HLG render path to the PQ colorspace (correct 4K colours)..."
+# So decide at runtime, per device:
+#   requireHLG()    = _requireHLG && uhdRealHlgSupported()      -> native HLG surface
+#   require2020PQ() = _require2020PQ || (_requireHLG && !uhdRealHlgSupported())
+#                                                                -> PQ reroute (Shield)
+# SDR content (both flags false) is untouched.
+
+if [[ "${F1TV_HLG_BYPASS:-1}" != "0" ]]; then
+    info "Patching RenderTargetConfig for a per-device HLG/PQ render path..."
     RTC_SMALI="$(find "${DECOMPILED}" -name 'RenderTargetConfig.smali' -path '*/tiledmedia/*' -print -quit)"
-    if [[ -n "${RTC_SMALI}" ]]; then
-        ok "Found: ${RTC_SMALI#${WORKDIR}/}"
-        python3 - "${RTC_SMALI}" << 'PYEOF'
+    [[ -n "${RTC_SMALI}" ]] || die "RenderTargetConfig.smali not found"
+    ok "Found: ${RTC_SMALI#${WORKDIR}/}"
+    if ! python3 - "${RTC_SMALI}" << 'PYEOF'
 import sys, re
 
 path = sys.argv[1]
@@ -623,44 +603,119 @@ with open(path) as f:
     content = f.read()
 
 C = 'Lcom/tiledmedia/clearvrview/RenderTargetConfig;'
+E = 'Lcom/tiledmedia/clearvrview/EGLRenderTarget;'
 
-# requireHLG() -> always false (device can't create an HLG EGL surface)
 hlg_new = f""".method public requireHLG()Z
     .locals 1
 
+    # UHD Patch: only ask for an HLG EGL surface when the GPU really has it
+    iget-boolean v0, p0, {C}->_requireHLG:Z
+
+    if-nez v0, :cond_0
+
     const/4 v0, 0x0
+
+    return v0
+
+    :cond_0
+    invoke-static {{}}, {E}->uhdRealHlgSupported()Z
+
+    move-result v0
 
     return v0
 .end method"""
 content, n1 = re.subn(r'\.method public requireHLG\(\)Z.*?\.end method', hlg_new, content, flags=re.DOTALL)
 
-# require2020PQ() -> (_require2020PQ OR _requireHLG): route HLG content through PQ
 pq_new = f""".method public require2020PQ()Z
     .locals 2
 
+    # UHD Patch: route HLG content through PQ when the GPU lacks the HLG colorspace
     iget-boolean v0, p0, {C}->_require2020PQ:Z
 
-    iget-boolean v1, p0, {C}->_requireHLG:Z
+    if-eqz v0, :cond_0
 
-    or-int/2addr v0, v1
+    const/4 v0, 0x1
 
+    return v0
+
+    :cond_0
+    iget-boolean v0, p0, {C}->_requireHLG:Z
+
+    if-nez v0, :cond_1
+
+    const/4 v0, 0x0
+
+    return v0
+
+    :cond_1
+    invoke-static {{}}, {E}->uhdRealHlgSupported()Z
+
+    move-result v1
+
+    if-eqz v1, :cond_2
+
+    const/4 v0, 0x0
+
+    :cond_2
     return v0
 .end method"""
 content, n2 = re.subn(r'\.method public require2020PQ\(\)Z.*?\.end method', pq_new, content, flags=re.DOTALL)
 
 if n1 != 1 or n2 != 1:
-    print(f"ERROR: PQ reroute pattern miss (requireHLG={n1}, require2020PQ={n2})", file=sys.stderr)
+    print(f"ERROR: RenderTargetConfig pattern miss (requireHLG={n1}, require2020PQ={n2})", file=sys.stderr)
     sys.exit(1)
 
 with open(path, 'w') as f:
     f.write(content)
-print("PQ reroute applied (requireHLG->false, require2020PQ->PQ||HLG)")
+print("requireHLG -> HLG && realHlg; require2020PQ -> PQ || (HLG && !realHlg)")
 PYEOF
-        [[ $? -eq 0 ]] || die "PQ reroute patch failed"
-        ok "PQ reroute patch applied"
-    else
-        warn "RenderTargetConfig.smali not found, skipping PQ reroute"
+    then
+        die "Runtime HLG/PQ reroute patch failed"
     fi
+    ok "Runtime HLG/PQ reroute patch applied"
+fi
+
+# ─── Surface HDR capability (SDK ≥ SP164): honest answer to the core ─────────
+#
+# Newer ClearVR SDKs (F1TV 3.0.49.x+) report, per view, whether the GL surface
+# can show PQ / HLG (TMViewModel -> DisplayObjectMapping.SurfaceCapabilities) and
+# the core picks the render path from that. With getIsBt2020HlgExtensionSupported()
+# forced true, every device claimed an HLG-capable GL surface — including
+# MediaTek / Amlogic TVs with neither EGL colorspace, which then fail or stutter
+# on the GL HDR path (issues #5, #11, #17). Report what we can actually render:
+#   HLG-capable surface = real HLG extension OR real PQ extension (via reroute).
+# Devices with neither are routed by the core to its non-GL (direct) path, where
+# the TV's own video pipeline handles HLG. Older SDKs have no such call: skipped.
+
+TMVM_SMALI="$(find "${DECOMPILED}" -name 'TMViewModel.smali' -path '*/tiledmedia/*' -print -quit)"
+if [[ "${F1TV_HLG_BYPASS:-1}" != "0" && -n "${TMVM_SMALI}" ]] \
+   && grep -q 'EGLRenderTarget;->getIsBt2020HlgExtensionSupported()Z' "${TMVM_SMALI}"; then
+    info "Patching TMViewModel surface HDR capability report..."
+    if ! python3 - "${TMVM_SMALI}" << 'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+old = 'invoke-static {}, Lcom/tiledmedia/clearvrview/EGLRenderTarget;->getIsBt2020HlgExtensionSupported()Z'
+new = 'invoke-static {}, Lcom/tiledmedia/clearvrview/EGLRenderTarget;->uhdSurfaceHlgRenderable()Z'
+n = content.count(old)
+if n != 1:
+    print(f"ERROR: expected exactly 1 HLG capability call in TMViewModel, found {n}", file=sys.stderr)
+    sys.exit(1)
+content = content.replace(old, new, 1)
+
+with open(path, 'w') as f:
+    f.write(content)
+print("SurfaceCapabilities.supportsHDRHlg -> uhdSurfaceHlgRenderable()")
+PYEOF
+    then
+        die "Surface HDR capability patch failed"
+    fi
+    ok "Surface HDR capability patch applied"
+else
+    info "TMViewModel has no surface HDR capability call (older SDK) — nothing to patch"
 fi
 
 # ─── Spoof display HDR capability (default ON — the 2160p unlock) ───────────
@@ -709,33 +764,305 @@ PYEOF
     fi
 fi
 
+# ─── Decoder max-resolution hint (default ON) ────────────────────────────────
+#
+# ClearVR configures the video decoder at the FIRST tile size it receives
+# (e.g. 960x544) with no max size, and relies on the decoder reallocating when
+# the stream ramps to 3840x2176 (seen on the Shield: "Over-riding the width:
+# 960 with max-width: 1920", then an OMX port reconfigure to 3840x2176).
+# Tegra copes. MediaTek decoders must re-acquire a 4K secure decoder instance
+# mid-stream and fail: "acquireVdecResource: resource: [3840, 2176, ...] not
+# enough, recliam and waitresource" -> TM4014 / flicker (issues #5, #11, #17).
+# The standard adaptive-playback fix is to tell MediaCodec up front how large
+# the stream can get (KEY_MAX_WIDTH / KEY_MAX_HEIGHT, what ExoPlayer does), so
+# the decoder reserves resources for its largest supported resolution once.
+# Set F1TV_DECODER_MAX_RES=0 to disable.
+
+if [[ "${F1TV_DECODER_MAX_RES:-1}" != "0" ]]; then
+    info "Adding decoder max-width/max-height hint (adaptive playback)..."
+    VDB_SMALI="$(find "${DECOMPILED}" -name 'VideoDecoderBridgeShared.smali' -path '*/tiledmedia/clearvrdecoder/*' -print -quit)"
+    [[ -n "${VDB_SMALI}" ]] || die "VideoDecoderBridgeShared.smali not found"
+    if ! python3 - "${VDB_SMALI}" << 'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+# Inside getMediaFormat(Configuration, Resolution, int): right after
+#     const-string v1, "height"
+#     invoke-virtual {v0, v1, p1}, MediaFormat.setInteger
+# v1/v2 are scratch locals and p1 is dead (reassigned on the next line).
+pat = re.compile(
+    r'(\.method private static getMediaFormat\(Lcom/tiledmedia/clearvrdecoder/video/VideoDecoderBridgeShared\$Configuration;Lcom/tiledmedia/clearvrdecoder/util/Resolution;I\)Landroid/media/MediaFormat;'
+    r'.*?const-string v1, "height"\n\n'
+    r'    invoke-virtual \{v0, v1, p1\}, Landroid/media/MediaFormat;->setInteger\(Ljava/lang/String;I\)V\n)',
+    re.DOTALL)
+m = pat.search(content)
+if not m:
+    print("ERROR: getMediaFormat height anchor not found", file=sys.stderr); sys.exit(1)
+
+hint = """
+    # UHD Patch: adaptive-playback hint -- reserve decoder resources for the
+    # largest resolution this decoder supports, so the ramp to 2160p needs no
+    # mid-stream reallocation (MediaTek: acquireVdecResource not enough).
+    iget-object v1, p0, Lcom/tiledmedia/clearvrdecoder/video/VideoDecoderBridgeShared$Configuration;->decoderCapabilities:Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;
+
+    if-eqz v1, :uhd_maxres_skip
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/DecoderCapability;->getMaxSupportedAndValidResolution()Lcom/tiledmedia/clearvrdecoder/util/Resolution;
+
+    move-result-object v1
+
+    if-eqz v1, :uhd_maxres_skip
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/Resolution;->getWidth()I
+
+    move-result v2
+
+    if-lez v2, :uhd_maxres_skip
+
+    const-string p1, "max-width"
+
+    invoke-virtual {v0, p1, v2}, Landroid/media/MediaFormat;->setInteger(Ljava/lang/String;I)V
+
+    invoke-virtual {v1}, Lcom/tiledmedia/clearvrdecoder/util/Resolution;->getHeight()I
+
+    move-result v2
+
+    const-string p1, "max-height"
+
+    invoke-virtual {v0, p1, v2}, Landroid/media/MediaFormat;->setInteger(Ljava/lang/String;I)V
+
+    :uhd_maxres_skip
+"""
+content = content[:m.end()] + hint + content[m.end():]
+with open(path, 'w') as f:
+    f.write(content)
+print("getMediaFormat -> max-width/max-height = decoder's largest supported resolution")
+PYEOF
+    then
+        die "Decoder max-resolution hint patch failed"
+    fi
+    ok "Decoder max-resolution hint applied"
+fi
+
+# ─── Opt-in: ClearVR player logs to logcat (F1TV_DEBUG_LOGS=1, dev builds) ──
+#
+# The F1TV app calls TiledmediaPlayer.setLogConfig(LogConfig.getDisabledConfig()),
+# which sets every ClearVR log level to ERROR and routes nothing to the console,
+# so logcat never shows what the player/core decided (audio tracks skipped,
+# render path chosen, decoder reconfigures, TM40xx causes). For test builds,
+# rewrite getDisabledConfig() into an INFO-level console config so
+# scripts/capture_logs.sh actually captures the player. Off by default.
+
+if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
+    info "Enabling ClearVR player logs (F1TV_DEBUG_LOGS=1)..."
+    LOGCFG_SMALI="$(find "${DECOMPILED}" -name 'LogConfig.smali' -path '*/tiledmedia/clearvrplayer/*' -print -quit)"
+    [[ -n "${LOGCFG_SMALI}" ]] || die "LogConfig.smali not found"
+    if ! python3 - "${LOGCFG_SMALI}" << 'PYEOF'
+import sys, re
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+pat = r'(\.method public static getDisabledConfig\(\)Lcom/tiledmedia/clearvrplayer/LogConfig;)(.*?)(\.end method)'
+m = re.search(pat, content, flags=re.DOTALL)
+if not m:
+    print("ERROR: getDisabledConfig not found", file=sys.stderr); sys.exit(1)
+body = m.group(2)
+n_lvl = body.count('Lcom/tiledmedia/clearvrenums/LogLevel;->ERROR:')
+n_bool = body.count('Ljava/lang/Boolean;->FALSE:')
+if n_lvl != 1 or n_bool != 1 or 'return-object v0' not in body:
+    print(f"ERROR: getDisabledConfig shape unexpected (ERROR={n_lvl}, FALSE={n_bool})", file=sys.stderr); sys.exit(1)
+body = body.replace('Lcom/tiledmedia/clearvrenums/LogLevel;->ERROR:', 'Lcom/tiledmedia/clearvrenums/LogLevel;->INFO:', 1)
+body = body.replace('Ljava/lang/Boolean;->FALSE:', 'Ljava/lang/Boolean;->TRUE:', 1)
+body = body.replace('    return-object v0', """    # UHD Patch (debug logs): INFO level, log to console/logcat
+    const/4 v1, 0x1
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setLogToConsole(Z)V
+
+    return-object v0""", 1)
+content = content[:m.start(2)] + body + content[m.end(2):]
+
+# getWarningConfig() is the SDK default (ClearVRCoreWrapper.<clinit>) and is what
+# actually applies: the app only calls enableLogs()/getDisabledConfig() when the
+# hidden "tiled player log upload" diagnostic is on. WARN -> INFO.
+pat2 = r'(\.method public static getWarningConfig\(\)Lcom/tiledmedia/clearvrplayer/LogConfig;)(.*?)(\.end method)'
+m2 = re.search(pat2, content, flags=re.DOTALL)
+if not m2 or m2.group(2).count('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:') != 1:
+    print("ERROR: getWarningConfig shape unexpected", file=sys.stderr); sys.exit(1)
+body2 = m2.group(2).replace('Lcom/tiledmedia/clearvrenums/LogLevel;->WARN:', 'Lcom/tiledmedia/clearvrenums/LogLevel;->INFO:', 1)
+# The native core writes its log to a file, not to logcat. Point it at the
+# app's external files dir (readable with `adb pull`, no root needed) so
+# capture_logs.sh can collect it.
+new_file = """    # UHD Patch (debug logs): core log file in the app's external files dir
+    const-string v1, "/sdcard/Android/data/com.formulaone.production/files"
+
+    new-instance v2, Ljava/io/File;
+
+    invoke-direct {v2, v1}, Ljava/io/File;-><init>(Ljava/lang/String;)V
+
+    invoke-virtual {v2}, Ljava/io/File;->mkdirs()Z
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFolder(Ljava/lang/String;)V
+
+    const-string v1, "clearvr.tmlog"
+
+    invoke-virtual {v0, v1}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFileName(Ljava/lang/String;)V
+
+    const-string v1, ""
+"""
+# apktool emits ".line N" markers between these statements; tolerate them.
+pat_file = re.compile(
+    r'    const-string v1, ""\n\n'
+    r'(?:    \.line \d+\n)?    invoke-virtual \{v0, v1\}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFileName\(Ljava/lang/String;\)V\n\n'
+    r'(?:    \.line \d+\n)?    invoke-virtual \{v0, v1\}, Lcom/tiledmedia/clearvrplayer/LogConfig;->setFolder\(Ljava/lang/String;\)V\n')
+body2, k = pat_file.subn(lambda _m: new_file, body2, count=1)
+if k != 1:
+    print("ERROR: getWarningConfig file/folder lines not found", file=sys.stderr); sys.exit(1)
+content = content[:m2.start(2)] + body2 + content[m2.end(2):]
+
+with open(path, 'w') as f:
+    f.write(content)
+print("getDisabledConfig -> INFO + console; getWarningConfig (default) -> INFO + core log file")
+PYEOF
+    then
+        die "Debug logs patch failed"
+    fi
+
+    # The Java SDK (TMLogger) never writes to logcat itself: every message goes
+    # into the native core via clearVRCoreLog(). Mirror it to logcat (tag
+    # "ClearVR") so decoder configuration, EGL render targets, audio probes and
+    # reconfigure decisions show up in `adb logcat` / capture_logs.sh.
+    TMLOGGER_SMALI="$(find "${DECOMPILED}" -name 'TMLogger.smali' -path '*/tiledmedia/clearvrhelpers/*' -print -quit)"
+    [[ -n "${TMLOGGER_SMALI}" ]] || die "TMLogger.smali not found"
+    if ! python3 - "${TMLOGGER_SMALI}" << 'PYEOF'
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    content = f.read()
+
+old = '    invoke-static {p1, p0, p2}, Lcom/tiledmedia/clearvrcorewrapper/ClearVRCoreWrapper;->clearVRCoreLog(Ljava/lang/String;Lcom/tiledmedia/clearvrenums/LogComponent;I)V'
+n = content.count(old)
+if n != 1:
+    print(f"ERROR: expected 1 clearVRCoreLog sink call in TMLogger.writeToLog, found {n}", file=sys.stderr); sys.exit(1)
+new = """    # UHD Patch (debug logs): mirror the SDK log to logcat
+    const-string v0, "ClearVR"
+
+    invoke-static {v0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
+
+""" + old
+content = content.replace(old, new, 1)
+with open(path, 'w') as f:
+    f.write(content)
+print("TMLogger.writeToLog -> also Log.i(\"ClearVR\", msg)")
+PYEOF
+    then
+        die "TMLogger logcat mirror patch failed"
+    fi
+    ok "ClearVR player logs enabled (INFO -> logcat, tag ClearVR / GoLog)"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
 
+# "-UHD", or "-UHD-dbg" for F1TV_DEBUG_LOGS builds (visible in the app's side
+# menu next to the version, so a tester can tell which bundle is installed).
+VER_SUFFIX="-UHD"
+[[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]] && VER_SUFFIX="-UHD-dbg"
+
 # Patch apktool.yml (manifest versionName)
 APKTOOL_YML="${DECOMPILED}/apktool.yml"
 if [[ -f "${APKTOOL_YML}" ]]; then
-    sed -i 's/\(versionName: .*\)/\1-UHD/' "${APKTOOL_YML}"
+    sed -i "s/\(versionName: .*\)/\1${VER_SUFFIX}/" "${APKTOOL_YML}"
     ok "Manifest versionName updated"
 fi
 
-# Patch BuildConfig.smali (in-app version string)
-BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -path '*/formulaone/*' -print -quit)"
-if [[ -n "${BUILDCONFIG}" ]]; then
-    # VERSION_NAME is a const-string like: const-string v0, "3.0.47.1-SP153..."
-    sed -i '/:->VERSION_NAME:Ljava\/lang\/String;/,/const-string/{s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/}' "${BUILDCONFIG}"
-    ok "BuildConfig VERSION_NAME updated"
-else
-    # Fallback: search all BuildConfig.smali files
-    BUILDCONFIG="$(find "${DECOMPILED}" -name 'BuildConfig.smali' -print -quit)"
-    if [[ -n "${BUILDCONFIG}" ]]; then
-        sed -i '/VERSION_NAME/s/\(const-string [^,]*, "\)\([^"]*\)"/\1\2-UHD"/' "${BUILDCONFIG}"
-        ok "BuildConfig VERSION_NAME updated (fallback)"
+# Patch the in-app version string. R8 inlines BuildConfig.VERSION_NAME, so the
+# string shown in the side menu is the const-string in
+# TvApplication.getBuildVersionName() (the old BuildConfig sed never matched).
+TVAPP_SMALI="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"
+if [[ -n "${TVAPP_SMALI}" ]]; then
+    if python3 - "${TVAPP_SMALI}" "${VER_SUFFIX}" << 'PYEOF'
+import sys, re
+path, suffix = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    content = f.read()
+pat = r'(\.method public getBuildVersionName\(\)Ljava/lang/String;.*?const-string(?:/jumbo)? v0, ")([^"]*)(")'
+content, n = re.subn(pat, lambda m: m.group(1) + m.group(2) + suffix + m.group(3), content, count=1, flags=re.DOTALL)
+if n != 1:
+    print("getBuildVersionName const-string not found", file=sys.stderr); sys.exit(1)
+with open(path, 'w') as f:
+    f.write(content)
+PYEOF
+    then
+        ok "In-app version string updated (${VER_SUFFIX})"
     else
-        warn "BuildConfig.smali not found, skipping in-app version patch"
+        warn "Could not patch TvApplication.getBuildVersionName — in-app version stays stock"
+    fi
+else
+    warn "TvApplication.smali not found, skipping in-app version patch"
+fi
+
+# ─── Self-check: every patch left its marker in the smali ───────────────────
+#
+# Catches silent pattern misses when F1TV ships a new ClearVR SDK (a miss here
+# must fail the build rather than publish a half-patched bundle).
+# (No `grep -q` at the end of pipes here: with pipefail, an early exit can kill
+# awk with SIGPIPE and turn a hit into a failure.)
+
+info "Verifying patched smali..."
+VERIFY_FAILED=0
+verify_marker() {   # <file-glob-name> <path-filter> <grep -E pattern> <description>
+    local f
+    f="$(find "${DECOMPILED}" -name "$1" -path "$2" -print -quit)"
+    if [[ -z "${f}" ]]; then
+        warn "  MISSING FILE: $1 ($4)"; VERIFY_FAILED=1; return
+    fi
+    if grep -qE -- "$3" "${f}"; then
+        ok "  $4"
+    else
+        warn "  NOT APPLIED: $4"; VERIFY_FAILED=1
+    fi
+}
+if f="$(find "${DECOMPILED}" -name 'DeviceSupportImpl.smali' -path '*/tiledmediaplayer/*' -print -quit)"; then
+    n="$(awk '/\.method private final validate(TmSdkSupport|LowRamDeviceSupport|ApiLevelSupport|IsUhdSupportedDevice)\(/,/\.end method/' "${f}" | grep -c 'const/4 p1, 0x0' || true)"
+    if [[ "${n}" == "4" ]]; then ok "  UHD validators stubbed (4/4)"; else warn "  NOT APPLIED: UHD validators ($n/4)"; VERIFY_FAILED=1; fi
+fi
+verify_marker 'DiagnosticsPreferenceManagerImpl.smali' '*' 'Diagnostics patch: always return true' 'quality selector enabled'
+verify_marker 'DecoderCapability.smali'   '*/tiledmedia/*' 'const/16 v2, 0x10'                         'decoder tile capability spoof'
+verify_marker 'TrueTVDisplaySizeHelper.smali' '*/tiledmedia/*' 'UHD Patch: always report a 3840x2160' '4K display size'
+if [[ "${F1TV_HLG_BYPASS:-1}" != "0" ]]; then
+    verify_marker 'EGLRenderTarget.smali'    '*/tiledmedia/*' 'UHD Patch: always advertise HLG'          'HDR advertise'
+    verify_marker 'EGLRenderTarget.smali'    '*/tiledmedia/*' '^\.method public static uhdRealHlgSupported\(\)Z' 'real HLG probe'
+    verify_marker 'EGLRenderTarget.smali'    '*/tiledmedia/*' '^\.method public static uhdRealPqSupported\(\)Z'  'real PQ probe'
+    verify_marker 'RenderTargetConfig.smali' '*/tiledmedia/*' 'uhdRealHlgSupported'                      'runtime HLG/PQ reroute'
+    if [[ -n "${TMVM_SMALI:-}" ]] && grep -qE 'uhdSurfaceHlgRenderable|getIsBt2020HlgExtensionSupported' "${TMVM_SMALI}"; then
+        verify_marker 'TMViewModel.smali'    '*/tiledmedia/*' 'uhdSurfaceHlgRenderable'                  'surface HDR capability report'
     fi
 fi
+if [[ "${F1TV_DISPLAY_HDR_SPOOF:-1}" != "0" ]]; then
+    if f="$(find "${DECOMPILED}" -name 'DeviceParameters.smali' -path '*/tiledmedia/*' -print -quit)"; then
+        if awk '/doesDisplaySupport\(Landroid\/content\/Context;I\)Z/,/\.end method/' "${f}" | grep 'const/4 v0, 0x1' >/dev/null; then ok "  display HDR spoof"; else warn "  NOT APPLIED: display HDR spoof"; VERIFY_FAILED=1; fi
+    fi
+fi
+if [[ "${F1TV_DECODER_MAX_RES:-1}" != "0" ]]; then
+    verify_marker 'VideoDecoderBridgeShared.smali' '*/tiledmedia/clearvrdecoder/*' 'const-string p1, "max-width"' 'decoder max-resolution hint'
+fi
+if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
+    verify_marker 'LogConfig.smali' '*/tiledmedia/clearvrplayer/*' 'UHD Patch \(debug logs\)' 'ClearVR player logs enabled'
+    verify_marker 'TMLogger.smali'  '*/tiledmedia/clearvrhelpers/*' 'const-string v0, "ClearVR"'   'ClearVR log mirrored to logcat'
+fi
+# The removed model spoof must stay removed: Build.MODEL must still be read in getRequestHeader.
+if f="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"; then
+    if awk '/\.method public getRequestHeader/,/\.end method/' "${f}" | grep 'Landroid/os/Build;->MODEL' >/dev/null; then ok "  request header untouched (real model)"; else warn "  UNEXPECTED: getRequestHeader no longer reads Build.MODEL"; VERIFY_FAILED=1; fi
+fi
+[[ "${VERIFY_FAILED}" == "0" ]] || die "Patch verification failed — refusing to build a half-patched bundle"
+ok "All patches verified"
 
 # ─── Rebuild with apktool ────────────────────────────────────────────────────
 

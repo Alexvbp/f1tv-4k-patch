@@ -413,16 +413,15 @@ jobs:
           chmod +x scripts/patch.sh
           bash scripts/patch.sh "${{ steps.apkm.outputs.path }}" output/
         env:
-          # Unlock the 2160p tier and render it with correct colours. All default
-          # on/off in patch.sh; set explicitly here for clarity.
-          #   HLG_BYPASS + DISPLAY_HDR_SPOOF -> serve the 2160p (HLG) tier
-          #   DIRECT_TO_VIEW=0 + PQ_REROUTE  -> EGL/GL path with correct 4K colours
-          # For weak/Amlogic GPUs that drop frames on the GL path, set
-          # F1TV_DIRECT_TO_VIEW=1 (trades correct HDR colours for smoothness).
+          # Unlock the 2160p tier. Both default on in patch.sh; set explicitly
+          # here for clarity. The HDR render path (native HLG, PQ reroute, or
+          # the core's direct path) is chosen per device at runtime — see the
+          # README "Applied patches" table.
           F1TV_HLG_BYPASS: "1"
           F1TV_DISPLAY_HDR_SPOOF: "1"
-          F1TV_DIRECT_TO_VIEW: "0"
-          F1TV_PQ_REROUTE: "1"
+          # Non-main (dev) builds route the ClearVR player log to logcat so
+          # scripts/capture_logs.sh shows what the player decided.
+          F1TV_DEBUG_LOGS: ${{ github.ref_name != 'main' && '1' || '0' }}
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH || '' }}
           KEYSTORE_PASS: ${{ secrets.KEYSTORE_PASS || 'android' }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS || 'f1tvpatch' }}

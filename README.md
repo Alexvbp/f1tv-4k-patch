@@ -19,11 +19,13 @@ Automated pipeline that patches the F1TV Android TV app to enable UHD/4K playbac
 > (`Display.getHdrCapabilities()`). F1's UHD is **HLG**; a panel that reports only HDR10 (like
 > most setups behind an NVIDIA Shield) makes ClearVR reject HLG upstream and fall back to
 > 1620p SDR. The pipeline forces the EGL HDR advertise **and** spoofs the display-capability
-> check, so the core serves the 2160p tiles; the device's video pipeline then plays them as
-> HDR10 or a clean 4K SDR downconvert (the same path YouTube HLG uses). **Needs the arm64 build**
-> — see [Verify 4K is working](#verify-4k-is-working). Genuinely HLG-capable devices get full HDR;
-> HDR10-only panels get accurate 4K. An opt-in `F1TV_PQ_REROUTE` can push some setups to true
-> HDR10 output — see [Build options](#build-options).
+> check, so the core serves the 2160p tiles. How those HLG tiles are then rendered is decided
+> **per device at runtime** from the GPU's real EGL colorspace support: a native HLG surface
+> where the GPU has it (Homatics, Mi Box, most HLG TVs — full HDR, untouched colours), an
+> HLG→PQ reroute where only the PQ colorspace exists (NVIDIA Shield — accurate 4K), and the
+> core's direct decoder→view path where the GPU has neither (MediaTek / Amlogic TVs — the TV's
+> own video pipeline handles HLG). **Needs the arm64 build** — see
+> [Verify 4K is working](#verify-4k-is-working).
 
 ## Installing on your Android TV
 
@@ -185,6 +187,8 @@ scripts/
   download_apkm.py             # Playwright-based APKMirror downloader (fallback)
   patch.sh                     # Smali patching, signing, bundling
   install.sh                   # ADB install helper (accepts .apkm, .xapk, or directory)
+  stream_stats.sh              # Live decoder/HDR stats over ADB (verify 4K)
+  capture_logs.sh              # Collect player/decoder logs for an issue report
   dump_device_props.sh         # Dump Android TV device profile for rs-google-play
 device_profiles/
   nvidia_shield_tv.properties  # NVIDIA Shield TV profile for Google Play downloads
@@ -226,6 +230,8 @@ If you're stuck at 1620p, check in order:
    the `config.arm64_v8a.apk` split (not `armeabi_v7a`). A 32-bit install can't do 4K.
 2. **Build flags** — the bundle must be built with `F1TV_HLG_BYPASS` **and** `F1TV_DISPLAY_HDR_SPOOF`
    on (both default; CI sets them). Public releases from before these defaults do **not** have them.
+   If your picture is **dark with crushed blacks** on an HLG-capable box, you are on a release ≤ 3.0.49.4
+   (unconditional HLG→PQ reroute) — update.
 3. **4K TV** — the panel must actually be 4K (the decode target follows the display). An HDR-capable
    panel additionally gets HDR output.
 
@@ -238,15 +244,24 @@ actually unlock 2160p are **HDR advertise** and **display-capability spoof**.
 |---|---|---|
 | UHD / device unlock | `DeviceSupportImpl` · `validateIsUhdSupportedDevice`, `validateTmSdkSupport`, `validateLowRamDeviceSupport`, `validateApiLevelSupport` | Each returns `Pair(true, null)`, so the device passes every UHD-capability gate (brand/product whitelist, secure-decoder probe, low-RAM check, API-level check). |
 | **Display-capability spoof** *(2160p unlock)* | `DeviceParameters` · `doesDisplaySupport` | Returns `true` so the core believes the panel accepts F1's HLG and serves the **2160p tiles** instead of rejecting HLG upstream and dropping to 1620p SDR. Default on; disable with `F1TV_DISPLAY_HDR_SPOOF=0`. |
-| **HDR advertise** *(2160p unlock)* | `EGLRenderTarget` · `getIsBt2020HlgExtensionSupported` | Returns `true`, so `DeviceParameters` reports PQ+HLG EGL support and the backend offers the HDR 2160p tier. Default on; disable with `F1TV_HLG_BYPASS=0`. |
+| **HDR advertise** *(2160p unlock)* | `EGLRenderTarget` · `getIsBt2020HlgExtensionSupported` | Returns `true`, so `DeviceParameters` reports PQ+HLG EGL support and the backend offers the HDR 2160p tier. The stock probe is kept as `uhdRealHlgSupported()`, plus a raw PQ probe `uhdRealPqSupported()` (no API-33 gate, which wrongly excluded the Shield on Android 11); the two patches below use those real answers. Default on; disable with `F1TV_HLG_BYPASS=0`. |
 | Quality selector | `DiagnosticsPreferenceManagerImpl` · `isVideoQualityEnabled` | Returns `true` so the in-app quality picker is visible. (The debug overlays are intentionally left off.) |
 | 4K display size | `TrueTVDisplaySizeHelper` · `getDefaultDisplaySize` | Hardcodes a `3840×2160` panel via `getTrueDisplaySizeIfTV`, lifting ClearVR's ~1.5× display-size cap (which otherwise limits a 1080p UI surface to `2880×1620`). |
-| PQ colour reroute *(correct colours)* | `RenderTargetConfig` · `requireHLG`, `require2020PQ` | Routes F1's HLG content through the EGL **PQ** colorspace the device supports (`requireHLG→false`, `require2020PQ→PQ‖HLG`) so the 4K tiles are correctly gamut-converted instead of shown washed-out. Default on; disable with `F1TV_PQ_REROUTE=0`. |
-| Render path | `RenderAPIConfig` · `getNRPTextureBlitMode` | **Default: EGL/GL path** (patch skipped) so ClearVR composites and does a correct BT.2020→Rec.709 conversion. Set `F1TV_DIRECT_TO_VIEW=1` to force `NATIVE_ANDROID_DIRECT_TO_VIEW` (decoder→SurfaceView) on weak/Amlogic GPUs that drop frames — at the cost of washed-out HDR colours. |
+| Runtime HLG/PQ render path *(correct colours everywhere)* | `RenderTargetConfig` · `requireHLG`, `require2020PQ` | `requireHLG → HLG && uhdRealHlgSupported()`, `require2020PQ → PQ ‖ (HLG && !uhdRealHlgSupported())`. GPUs with the HLG colorspace get a **native HLG surface** (full HDR, no colour shift — fixes the dark/crushed picture of the old unconditional reroute, #20); GPUs with only PQ (NVIDIA Shield) get the **HLG→PQ reroute** that gives accurate 4K there. SDR content untouched. |
+| Surface HDR capability *(SDK ≥ SP164 / F1TV 3.0.49+)* | `TMViewModel` · `getDisplayObjectMappings` | Reports the GL surface as HLG-capable only when it really is (`uhdSurfaceHlgRenderable()` = real HLG **or** real PQ). Devices with neither colorspace (MediaTek / Amlogic TVs) are no longer pushed onto the GL HDR path, which failed or stuttered there (TM4014 / HDR flicker, #5 #11 #17); the core routes them to its direct decoder→view path instead. Older SDKs have no such call and are skipped. |
 | Decoder capability spoof | `DecoderCapability` · `getAsCoreProtobuf` | Reports non-zero secure tile slots/rows/cols (16/5/5) so the backend serves the full-resolution tile tier instead of a reduced one. |
+| Decoder max-resolution hint | `VideoDecoderBridgeShared` · `getMediaFormat` | Adds `max-width`/`max-height` (the decoder's largest supported resolution) to the decoder format. ClearVR configures the decoder at the first tile size (e.g. 960x544) and relies on a mid-stream reallocation when the stream ramps to 3840x2176; MediaTek decoders fail that reallocation (`acquireVdecResource … not enough` → TM4014, #5 #11 #17). Default on; disable with `F1TV_DECODER_MAX_RES=0`. |
 | NVIDIA workaround off | `Quirks` · `deviceNeedsNoPostProcessWorkaround` | Returns `false` so the decoder isn't forced into a lower-quality no-post-process path on NVIDIA devices. |
-| Device-model spoof | `TvApplication` · `getRequestHeader` | Sends `model=chromecast` in the `x-f1-device-info` header. |
 | Version tag | `apktool.yml`, `BuildConfig` | Appends `-UHD` to the version name so patched builds are identifiable. |
+| Self-check | *(all of the above)* | After patching, `patch.sh` verifies every marker is present and **fails the build** on any miss, so a new ClearVR SDK can't silently ship a half-patched bundle. |
+
+> Removed in this release: the *"device-model spoof"* (`model=chromecast`). It patched the first
+> `Build.MODEL` read in `TvApplication`, which sits in `getDeviceType()` (the Amazon Fire-Stick
+> check), not in `getRequestHeader()` — the header always carried the real model, and the only
+> effect was mis-detecting Amazon devices. The UHD whitelist is bypassed client-side anyway. Also
+> removed: the opt-in `F1TV_DIRECT_TO_VIEW` / `F1TV_PQ_REROUTE` build flags — the render path is
+> now chosen per device at runtime (and the SDK in F1TV 3.0.49+ no longer has the app-level
+> blit-mode switch the old flag patched).
 
 ## Build options
 
@@ -254,14 +269,27 @@ actually unlock 2160p are **HDR advertise** and **display-capability spoof**.
 
 | Variable | Default | Effect |
 |---|---|---|
-| `F1TV_HLG_BYPASS` | `1` | Advertise EGL HDR (PQ+HLG) so the backend offers the 2160p tier. Required for 4K. |
+| `F1TV_HLG_BYPASS` | `1` | Advertise EGL HDR (PQ+HLG) so the backend offers the 2160p tier, and install the runtime HLG/PQ render-path patches. Required for 4K. |
 | `F1TV_DISPLAY_HDR_SPOOF` | `1` | Force the display-capability check to accept all HDR types so the core serves 2160p on HDR10-only panels. Required for 4K on the Shield. |
-| `F1TV_PQ_REROUTE` | `1` | Render the HDR tiles through the EGL PQ colorspace and gamut-convert them correctly (fixes washed-out colours). |
-| `F1TV_DIRECT_TO_VIEW` | `0` | Default off = EGL/GL render path with correct 4K colours. Set `1` to force decoder→SurfaceView direct rendering on weak/Amlogic GPUs that drop frames on the GL path (trades correct HDR colours for smoothness). |
+| `F1TV_DECODER_MAX_RES` | `1` | Tell the video decoder up front how large the stream can get (adaptive-playback hint) so the 2160p ramp needs no mid-stream decoder reallocation. |
+| `F1TV_DEBUG_LOGS` | `0` | Set `1` to route the ClearVR SDK log (INFO level) to logcat under the tag `ClearVR`, and make the native core write its own log to `/sdcard/Android/data/com.formulaone.production/files/clearvr.tmlog`; the stock app silences both. CI turns this on for every non-`main` branch, so **dev pre-releases log (`-UHD-dbg`) and `main` releases don't**. `scripts/capture_logs.sh` collects both. |
 
 > **Result on an NVIDIA Shield + HDR10 TV:** true **3840×2160** with accurate colours, output as a
 > clean SDR downconvert (the Shield's GPU lacks the HLG EGL colorspace, so full HDR10 to the panel
 > isn't reliable — but the 4K resolution and colour accuracy are the wins).
+> **On an HLG-capable device** (Homatics, Mi Box, most HLG TVs): true 3840×2160 **HLG HDR**, untouched.
+
+## Reporting a playback problem
+
+Please attach the output of the log helper — it is what makes "video error" / `TM40xx` /
+HDR-flicker reports actionable:
+
+```bash
+./scripts/capture_logs.sh 192.168.1.100:5555   # start it, then play the stream that fails
+```
+
+It records the device/ABI/HDR/EGL capabilities once and then only the player, decoder and display
+log lines until you press Ctrl+C, into a `f1tv-logs-*.txt` next to it.
 
 ## License
 
