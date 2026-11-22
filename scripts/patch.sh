@@ -966,6 +966,86 @@ PYEOF
     ok "ClearVR player logs enabled (INFO -> logcat, tag ClearVR / GoLog)"
 fi
 
+# ─── Strip the Google Play "PairIP" license check (F1TV ≥ 3.0.51) ───────────
+#
+# From 3.0.51 (R55.1) the Play build is wrapped with PairIP's license-check
+# module: <application android:name> becomes com.pairip.application.Application,
+# a thin subclass of the real com.avs.f1.TvApplication whose attachBaseContext()
+# calls LicenseClient.checkLicense(). A re-signed bundle fails the local
+# installer check ("Local install check failed due to wrong installer"), so the
+# app opens LicenseActivity, bounces to a Play Store paywall page and exits
+# (issue #25).
+#
+# Only the license-check module is present (no PairIP code virtualization:
+# no VMRunner / libpairipcore), so it can be removed cleanly:
+#   1. point <application android:name> back at the wrapper's superclass, so
+#      the wrapper never runs;
+#   2. stub LicenseClient.checkLicense() / initializeLicenseCheck() as a
+#      backstop in case another entry point (e.g. a ContentProvider) calls them.
+# Bundles without PairIP (≤ 3.0.50) are left untouched.
+PAIRIP_APP_SMALI="$(find "${DECOMPILED}" -path '*/com/pairip/application/Application.smali' -print -quit)"
+PAIRIP_CLIENT_SMALI="$(find "${DECOMPILED}" -path '*/com/pairip/licensecheck/LicenseClient.smali' -print -quit)"
+if [[ -n "${PAIRIP_APP_SMALI}" || -n "${PAIRIP_CLIENT_SMALI}" ]]; then
+    info "PairIP license check found — removing..."
+    if [[ -n "$(find "${DECOMPILED}" -path '*/com/pairip/VMRunner.smali' -print -quit)" ]]; then
+        die "PairIP code virtualization (VMRunner) detected — this bundle can't be de-licensed by patch.sh"
+    fi
+    [[ -n "${PAIRIP_CLIENT_SMALI}" ]] || die "PairIP present but LicenseClient.smali not found"
+    python3 - "${DECOMPILED}/AndroidManifest.xml" "${PAIRIP_APP_SMALI}" "${PAIRIP_CLIENT_SMALI}" << 'PYEOF'
+import sys, re
+manifest_path, app_smali, client_smali = sys.argv[1], sys.argv[2], sys.argv[3]
+WRAPPER = 'com.pairip.application.Application'
+
+# 1. Restore the real Application class in the manifest.
+with open(manifest_path) as f:
+    manifest = f.read()
+if f'android:name="{WRAPPER}"' in manifest:
+    if not app_smali:
+        print("ERROR: manifest uses the PairIP wrapper but its smali is missing", file=sys.stderr); sys.exit(1)
+    with open(app_smali) as f:
+        sup = re.search(r'^\.super L([^;]+);', f.read(), re.M)
+    if not sup:
+        print("ERROR: could not read the PairIP wrapper's superclass", file=sys.stderr); sys.exit(1)
+    real = sup.group(1).replace('/', '.')
+    if real.startswith('com.pairip.'):
+        print(f"ERROR: unexpected wrapper superclass {real}", file=sys.stderr); sys.exit(1)
+    if real == 'android.app.Application':
+        manifest, n = re.subn(r'\s+android:name="' + re.escape(WRAPPER) + '"', '', manifest, count=1)
+    else:
+        manifest, n = re.subn(r'android:name="' + re.escape(WRAPPER) + '"', f'android:name="{real}"', manifest, count=1)
+    if n != 1:
+        print("ERROR: failed to replace the PairIP Application in the manifest", file=sys.stderr); sys.exit(1)
+    with open(manifest_path, 'w') as f:
+        f.write(manifest)
+    print(f"<application> {WRAPPER} -> {real}")
+
+# 2. Stub the LicenseClient entry points.
+with open(client_smali) as f:
+    content = f.read()
+STUBS = {
+    'checkLicense': (r'\.method public static checkLicense\(Landroid/content/Context;\)V.*?\.end method',
+                     ".method public static checkLicense(Landroid/content/Context;)V"),
+    'initializeLicenseCheck': (r'\.method public initializeLicenseCheck\(\)V.*?\.end method',
+                               ".method public initializeLicenseCheck()V"),
+}
+for name, (pattern, header) in STUBS.items():
+    stub = header + """
+    .locals 0
+
+    # UHD Patch: PairIP license check removed
+    return-void
+.end method"""
+    content, n = re.subn(pattern, stub, content, count=1, flags=re.DOTALL)
+    if n != 1:
+        print(f"ERROR: LicenseClient.{name} not found", file=sys.stderr); sys.exit(1)
+    print(f"LicenseClient.{name} -> no-op")
+with open(client_smali, 'w') as f:
+    f.write(content)
+PYEOF
+    [[ $? -eq 0 ]] || die "PairIP license check removal failed"
+    ok "PairIP license check removed"
+fi
+
 # ─── Patch version name ─────────────────────────────────────────────────────
 
 info "Patching version name..."
@@ -1056,6 +1136,15 @@ fi
 if [[ "${F1TV_DEBUG_LOGS:-0}" == "1" ]]; then
     verify_marker 'LogConfig.smali' '*/tiledmedia/clearvrplayer/*' 'UHD Patch \(debug logs\)' 'ClearVR player logs enabled'
     verify_marker 'TMLogger.smali'  '*/tiledmedia/clearvrhelpers/*' 'const-string v0, "ClearVR"'   'ClearVR log mirrored to logcat'
+fi
+if [[ -n "${PAIRIP_CLIENT_SMALI:-}" ]]; then
+    n="$(grep -c 'UHD Patch: PairIP license check removed' "${PAIRIP_CLIENT_SMALI}" || true)"
+    if [[ "${n}" == "2" ]]; then ok "  PairIP license check stubbed (2/2)"; else warn "  NOT APPLIED: PairIP license check ($n/2)"; VERIFY_FAILED=1; fi
+fi
+if grep -q 'com\.pairip\.application\.Application' "${DECOMPILED}/AndroidManifest.xml"; then
+    warn "  NOT APPLIED: manifest still uses the PairIP Application wrapper"; VERIFY_FAILED=1
+elif [[ -n "${PAIRIP_APP_SMALI:-}" ]]; then
+    ok "  PairIP Application wrapper bypassed"
 fi
 # The removed model spoof must stay removed: Build.MODEL must still be read in getRequestHeader.
 if f="$(find "${DECOMPILED}" -name 'TvApplication.smali' -path '*/avs/f1/*' -print -quit)"; then
